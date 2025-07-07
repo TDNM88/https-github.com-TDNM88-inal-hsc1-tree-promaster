@@ -39,7 +39,6 @@ type AuthContextType = {
   refreshUser: () => Promise<void>
 }
 
-// Tạo context với giá trị mặc định
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
@@ -133,3 +132,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAuthenticated = () => {
     return !!user
+  }
+
+  const isAdmin = () => {
+    return user?.role === "admin"
+  }
+
+  const refreshUser = async () => {
+    await checkAuth()
+  }
+
+  useEffect(() => {
+    checkAuth()
+  }, [])
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        login,
+        logout,
+        isAuthenticated,
+        isAdmin,
+        refreshUser,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  )
+}
