@@ -11,6 +11,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Trading Platform",
   description: "Nền tảng giao dịch trực tuyến",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({

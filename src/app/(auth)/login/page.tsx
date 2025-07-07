@@ -2,40 +2,33 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/useAuth"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Eye, EyeOff } from "lucide-react"
+import { Loader2, Lock, User } from "lucide-react"
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-
-  const router = useRouter()
-  const searchParams = useSearchParams()
   const { login, isAuthenticated, isAdmin } = useAuth()
-
-  const callbackUrl = searchParams.get("callbackUrl") || "/"
+  const router = useRouter()
 
   // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated()) {
-      if (isAdmin()) {
-        router.push("/admin")
-      } else {
-        router.push(callbackUrl)
-      }
+  if (isAuthenticated()) {
+    if (isAdmin()) {
+      router.push("/admin")
+    } else {
+      router.push("/trade")
     }
-  }, [isAuthenticated, isAdmin, router, callbackUrl])
+    return null
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,74 +36,73 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await login(username.trim(), password)
+      const result = await login(username, password)
 
       if (result.success) {
-        // Redirect will be handled by useEffect
+        // Redirect will be handled by the auth context
+        if (isAdmin()) {
+          router.push("/admin")
+        } else {
+          router.push("/trade")
+        }
       } else {
         setError(result.message || "Đăng nhập thất bại")
       }
     } catch (err) {
-      setError("Lỗi kết nối")
+      setError("Lỗi kết nối. Vui lòng thử lại sau.")
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Đăng nhập</CardTitle>
-          <CardDescription className="text-center">Nhập thông tin đăng nhập của bạn</CardDescription>
+          <CardTitle className="text-2xl font-bold text-center">Đăng nhập Admin</CardTitle>
+          <CardDescription className="text-center">Nhập thông tin đăng nhập để truy cập hệ thống</CardDescription>
         </CardHeader>
         <CardContent>
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username">Tên đăng nhập</Label>
-              <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                minLength={3}
-                placeholder="Nhập tên đăng nhập"
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="Nhập tên đăng nhập"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="pl-10"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">Mật khẩu</Label>
               <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type="password"
+                  placeholder="Nhập mật khẩu"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10"
                   required
-                  minLength={6}
-                  placeholder="Nhập mật khẩu"
                   disabled={isLoading}
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={isLoading}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
               </div>
             </div>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
@@ -124,11 +116,16 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-4 text-center text-sm">
-            <span className="text-gray-600">Chưa có tài khoản? </span>
-            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              Đăng ký ngay
-            </Link>
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <p className="text-sm text-gray-600 font-medium mb-2">Thông tin demo:</p>
+            <div className="text-xs text-gray-500 space-y-1">
+              <p>
+                <strong>Admin:</strong> admin / admin123
+              </p>
+              <p>
+                <strong>User:</strong> user / user123
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

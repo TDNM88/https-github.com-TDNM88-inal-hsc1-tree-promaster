@@ -1,5 +1,6 @@
 "use client"
 
+import type React from "react"
 import { useState, useEffect, createContext, useContext } from "react"
 
 type User = {
@@ -46,7 +47,7 @@ export const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
   isAuthenticated: () => false,
   isAdmin: () => false,
-  refreshUser: async () => {}
+  refreshUser: async () => {},
 })
 
 export function useAuth() {
@@ -124,9 +125,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials: "include",
       })
       setUser(null)
+      // Redirect to login after logout
+      window.location.href = "/login"
     } catch (error) {
       console.error("Logout error:", error)
       setUser(null)
+      window.location.href = "/login"
     }
   }
 

@@ -1,762 +1,694 @@
-'use client';
+"use client"
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/useAuth';
-import { 
-  Loader2, Home, Users, History, TrendingUp, ArrowUpCircle, ArrowDownCircle, Settings, Bell, HelpCircle, Edit, Trash2, ChevronLeft, ChevronRight, Upload, FileText, CheckCircle, XCircle, Clock, Eye, User, RefreshCw, AlertCircle,
-  CreditCard, LogOut, Search, MoreVertical, Check, X
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { useToast } from '@/components/ui/use-toast';
-import { CustomersTab } from '@/components/admin/CustomersTab';
-import useSWR from 'swr';
-import UserMenu from '@/components/user-menu';
-import router from 'next/router';
-import { Customer } from '@/hooks/useCustomers';
+import { useState } from "react"
+import { useAuth } from "@/lib/useAuth"
+import { ProtectedRoute } from "@/components/auth/protected-route"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { toast } from "@/components/ui/use-toast"
+import {
+  Users,
+  DollarSign,
+  TrendingUp,
+  Activity,
+  Search,
+  Download,
+  Edit,
+  Eye,
+  CheckCircle,
+  XCircle,
+} from "lucide-react"
+import { formatDistanceToNow } from "date-fns"
+import { vi } from "date-fns/locale"
 
-// Verification Image Modal Component
-interface VerificationImageModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  frontImage: string;
-  backImage: string;
-  userName: string;
+// Mock data - replace with real API calls
+const mockStats = {
+  totalUsers: 1247,
+  totalDeposits: 15420000,
+  totalWithdrawals: 8750000,
+  activeOrders: 89,
 }
 
-function VerificationImageModal({ 
-  isOpen, 
-  onClose, 
-  frontImage, 
-  backImage, 
-  userName 
-}: VerificationImageModalProps) {
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl">
-        <DialogHeader>
-          <DialogTitle>Ảnh CCCD/CMND - {userName}</DialogTitle>
-        </DialogHeader>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <h4 className="text-sm font-medium mb-2">Mặt trước</h4>
-            <img 
-              src={frontImage} 
-              alt="Mặt trước CCCD/CMND" 
-              className="w-full h-auto rounded border border-gray-700"
-            />
-          </div>
-          <div>
-            <h4 className="text-sm font-medium mb-2">Mặt sau</h4>
-            <img 
-              src={backImage} 
-              alt="Mặt sau CCCD/CMND" 
-              className="w-full h-auto rounded border border-gray-700"
-            />
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+const mockUsers = [
+  {
+    id: "1",
+    username: "user001",
+    fullName: "Nguyễn Văn A",
+    email: "user001@example.com",
+    phone: "0901234567",
+    balance: { available: 500000, frozen: 0 },
+    status: { active: true, betLocked: false, withdrawLocked: false },
+    verification: { status: "verified" },
+    createdAt: "2024-01-15T10:30:00Z",
+    lastLogin: "2024-01-20T14:22:00Z",
+  },
+  {
+    id: "2",
+    username: "user002",
+    fullName: "Trần Thị B",
+    email: "user002@example.com",
+    phone: "0912345678",
+    balance: { available: 1200000, frozen: 100000 },
+    status: { active: true, betLocked: false, withdrawLocked: true },
+    verification: { status: "pending" },
+    createdAt: "2024-01-16T09:15:00Z",
+    lastLogin: "2024-01-20T16:45:00Z",
+  },
+]
 
-// Define PageType as a type
-type PageType = 
-  | 'dashboard' 
-  | 'customers' 
-  | 'order-history' 
-  | 'trading-sessions' 
-  | 'deposit-requests' 
-  | 'withdrawal-requests' 
-  | 'settings' 
-  | 'identity-verification';
+const mockDeposits = [
+  {
+    id: "1",
+    user: { username: "user001", fullName: "Nguyễn Văn A" },
+    amount: 500000,
+    status: "pending",
+    bankInfo: {
+      bankName: "Vietcombank",
+      accountNumber: "1234567890",
+      accountName: "NGUYEN VAN A",
+    },
+    createdAt: "2024-01-20T10:30:00Z",
+  },
+  {
+    id: "2",
+    user: { username: "user002", fullName: "Trần Thị B" },
+    amount: 1000000,
+    status: "approved",
+    bankInfo: {
+      bankName: "Techcombank",
+      accountNumber: "0987654321",
+      accountName: "TRAN THI B",
+    },
+    createdAt: "2024-01-20T09:15:00Z",
+    approvedAt: "2024-01-20T09:30:00Z",
+  },
+]
 
-interface MenuItem {
-  id: PageType;
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
+const mockWithdrawals = [
+  {
+    id: "1",
+    user: { username: "user001", fullName: "Nguyễn Văn A" },
+    amount: 300000,
+    status: "processing",
+    bank: {
+      bankName: "Vietcombank",
+      accountNumber: "1234567890",
+      accountName: "NGUYEN VAN A",
+    },
+    createdAt: "2024-01-20T11:00:00Z",
+  },
+]
 
-const menuItems: MenuItem[] = [
-  { id: 'dashboard', title: 'Dashboard', icon: Home },
-  { id: 'customers', title: 'Khách hàng', icon: Users },
-  { id: 'order-history', title: 'Lịch sử đặt lệnh', icon: History },
-  { id: 'trading-sessions', title: 'Phiên giao dịch', icon: TrendingUp },
-  { id: 'deposit-requests', title: 'Yêu cầu nạp tiền', icon: ArrowUpCircle },
-  { id: 'withdrawal-requests', title: 'Yêu cầu rút tiền', icon: ArrowDownCircle },
-  { id: 'settings', title: 'Cài đặt', icon: Settings },
-  { id: 'identity-verification', title: 'Xác minh danh tính', icon: FileText },
-];
-
-const fetcher = async (url: string, token: string): Promise<any> => {
-  const response = await fetch(url, { 
-    headers: { 
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    } 
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'Failed to fetch data');
-  }
-  return response.json();
-};
-
-// Using Customer type from @/hooks/useCustomers
-
-// Customers Page Component
-function CustomersPage({ token }: { token: string }) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const data = await fetcher('/api/admin/customers', token);
-        setCustomers(data);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch customers';
-        setError(errorMessage);
-        toast({
-          title: 'Error',
-          description: errorMessage,
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (token) {
-      fetchCustomers();
-    }
-  }, [token, toast]);
-
-  const filteredCustomers = useMemo(() => {
-    return customers.filter(customer => {
-      const searchLower = searchTerm.toLowerCase();
-      const matchesSearch = 
-        customer.username.toLowerCase().includes(searchLower) ||
-        (customer.fullName?.toLowerCase().includes(searchLower) ?? false);
-      
-      const matchesStatus = statusFilter === 'all' || 
-                          (statusFilter === 'active' && customer.status === 'active') ||
-                          (statusFilter === 'inactive' && customer.status === 'inactive');
-      
-      return matchesSearch && matchesStatus;
-    });
-  }, [customers, searchTerm, statusFilter]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-4">
-        <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Error loading customers</h2>
-        <p className="text-gray-400 mb-4">{error}</p>
-        <Button onClick={() => window.location.reload()} variant="outline">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Try Again
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Customers</h2>
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Search customers..."
-              className="pl-8 w-[200px] lg:w-[300px]"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Username</TableHead>
-                <TableHead>Full Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Balance</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCustomers.map((customer) => (
-                <TableRow key={customer._id}>
-                  <TableCell>{customer.username}</TableCell>
-                  <TableCell>{customer.fullName || 'N/A'}</TableCell>
-                  <TableCell>
-                    <Badge variant={customer.status === 'active' ? 'default' : 'secondary'}>
-                      {customer.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>${customer.balance?.available?.toLocaleString() || '0'}</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredCustomers.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    No customers found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// Common props for page components with date range
-interface DateRangeProps {
-  startDate: string;
-  setStartDate: (date: string) => void;
-  endDate: string;
-  setEndDate: (date: string) => void;
-  token: string;
-}
-
-// Placeholder components for missing pages
-function OrderHistoryPage({ startDate, setStartDate, endDate, setEndDate, token }: DateRangeProps) {
-  return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Order History</h2>
-      <div className="flex items-center space-x-4">
-        <div>
-          <Label htmlFor="start-date">Start Date</Label>
-          <Input
-            id="start-date"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </div>
-        <div>
-          <Label htmlFor="end-date">End Date</Label>
-          <Input
-            id="end-date"
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
-      </div>
-      <Card>
-        <CardContent className="p-6">
-          <p>Order history will be displayed here.</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function TradingSessionsPage({ token }: { token: string }) {
-  return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Trading Sessions</h2>
-      <Card>
-        <CardContent className="p-6">
-          <p>Trading sessions will be displayed here.</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function DepositRequestsPage({ startDate, setStartDate, endDate, setEndDate, token }: DateRangeProps) {
-  return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Deposit Requests</h2>
-      <div className="flex items-center space-x-4">
-        <div>
-          <Label htmlFor="deposit-start-date">Start Date</Label>
-          <Input
-            id="deposit-start-date"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </div>
-        <div>
-          <Label htmlFor="deposit-end-date">End Date</Label>
-          <Input
-            id="deposit-end-date"
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
-      </div>
-      <Card>
-        <CardContent className="p-6">
-          <p>Deposit requests will be displayed here.</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function WithdrawalRequestsPage({ startDate, setStartDate, endDate, setEndDate, token }: DateRangeProps) {
-  return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Withdrawal Requests</h2>
-      <div className="flex items-center space-x-4">
-        <div>
-          <Label htmlFor="withdrawal-start-date">Start Date</Label>
-          <Input
-            id="withdrawal-start-date"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </div>
-        <div>
-          <Label htmlFor="withdrawal-end-date">End Date</Label>
-          <Input
-            id="withdrawal-end-date"
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
-      </div>
-      <Card>
-        <CardContent className="p-6">
-          <p>Withdrawal requests will be displayed here.</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function SettingsPage({ token }: { token: string }) {
-  return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Settings</h2>
-      <Card>
-        <CardContent className="p-6">
-          <p>Settings will be configured here.</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function IdentityVerificationPage({ token }: { token: string }) {
-  return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Identity Verification</h2>
-      <Card>
-        <CardContent className="p-6">
-          <p>Identity verification requests will be displayed here.</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// Dashboard Page Component
-interface DashboardPageProps {
-  startDate: string;
-  setStartDate: (date: string) => void;
-  endDate: string;
-  setEndDate: (date: string) => void;
-  token: string;
-}
-
-interface StatsData {
-  newUsers: number;
-  totalDeposits: number;
-  totalWithdrawals: number;
-  totalUsers: number;
-}
-
-interface Order {
-  user: string;
-  session: string;
-  type: string;
-  amount: number;
-  result: string;
-  time: string;
-}
-
-interface User {
-  fullName: string;
-  username: string;
-  balance: { available: number };
-  loginInfo: string;
-  role: string;
-}
-
-function DashboardPage({ startDate, setStartDate, endDate, setEndDate, token }: DashboardPageProps) {
-  const { toast } = useToast();
-  const { data: statsData, isLoading: statsLoading } = useSWR<StatsData>(
-    token ? `/api/admin/stats?startDate=${startDate}&endDate=${endDate}` : null,
-    (url: string) => fetcher(url, token)
-  );
-
-  const { data: ordersData, isLoading: ordersLoading } = useSWR<Order[]>(
-    token ? `/api/admin/orders?startDate=${startDate}&endDate=${endDate}&limit=8` : null,
-    (url: string) => fetcher(url, token)
-  );
-
-  const { data: usersData, isLoading: usersLoading } = useSWR<User[]>(
-    token ? '/api/admin/users?limit=5' : null,
-    (url: string) => fetcher(url, token)
-  );
-
-  const stats = statsData || { newUsers: 131, totalDeposits: 10498420000, totalWithdrawals: 6980829240, totalUsers: 5600000 };
-  const orders = ordersData || [];
-  const users = usersData || [];
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
-        <Home className="h-4 w-4" />
-        <span>/</span>
-        <span>Dashboard</span>
-      </div>
-      <div className="flex flex-col sm:flex-row items-center gap-4 mb-4">
-        <span className="text-sm font-medium">Thời gian</span>
-        <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-          <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full sm:w-32 h-8" />
-          <span>-</span>
-          <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full sm:w-32 h-8" />
-        </div>
-        <Button variant="outline" size="sm" className="w-full sm:w-auto">Đặt lại</Button>
-        <Button size="sm" className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">Áp dụng</Button>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-400">Tài khoản mới</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold text-green-500">{statsLoading ? '...' : stats.newUsers}</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-400">Tổng tiền nạp</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold text-green-600">{statsLoading ? '...' : stats.totalDeposits.toLocaleString()} đ</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-400">Tổng tiền rút</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold text-red-600">{statsLoading ? '...' : stats.totalWithdrawals.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-400">Tài khoản</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold text-green-500">{statsLoading ? '...' : stats.totalUsers}</div>
-          </CardContent>
-        </Card>
-      </div>
-      <Card className="bg-gray-800 border-gray-700">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-white">Lệnh mới</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          {ordersLoading ? (
-            <div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-white">Người dùng</TableHead>
-                  <TableHead className="text-white">Phiên</TableHead>
-                  <TableHead className="text-white">Loại</TableHead>
-                  <TableHead className="text-white">Số tiền</TableHead>
-                  <TableHead className="text-white">Kết quả</TableHead>
-                  <TableHead className="text-white">Thời gian</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders.map((order, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="text-teal-500 font-medium">{order.user}</TableCell>
-                    <TableCell className="text-white">{order.session}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={order.type === 'Lên' ? 'default' : 'destructive'}
-                        className={order.type === 'Lên' ? 'bg-green-500 hover:bg-green-500' : 'bg-red-500 hover:bg-red-500'}
-                      >
-                        {order.type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-white">{order.amount.toLocaleString()}đ</TableCell>
-                    <TableCell className="text-green-500 font-semibold">{order.result}</TableCell>
-                    <TableCell className="text-gray-400">{order.time}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-      <Card className="mt-6 bg-gray-800 border-gray-700">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-white">Người dùng mới</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          {usersLoading ? (
-            <div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-white">Tên</TableHead>
-                  <TableHead className="text-white">Tên đăng nhập</TableHead>
-                  <TableHead className="text-white">Tiền</TableHead>
-                  <TableHead className="text-white">Ip login</TableHead>
-                  <TableHead className="text-white">Vai trò</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="text-teal-500 font-medium">{user.fullName}</TableCell>
-                    <TableCell className="text-white">{user.username}</TableCell>
-                    <TableCell className="text-white">{user.balance?.available.toLocaleString()}</TableCell>
-                    <TableCell className="text-white">{user.loginInfo}</TableCell>
-                    <TableCell className="text-white">{user.role === 'admin' ? 'Quản trị' : 'Khách hàng'}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// API Response Types
-interface ApiResponse<T> {
-  data?: T;
-  error?: string;
-  message?: string;
-}
-
-interface EditForm {
-  username: string;
-  password: string;
-  fullName: string;
-  balance: string;
-  frozenBalance: string;
-  bankName: string;
-  accountNumber: string;
-  accountHolder: string;
-  email: string;
-  phone: string;
-}
-
-// Error boundary component
-interface ErrorBoundaryState {
-  hasError: boolean;
-}
-
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, ErrorBoundaryState> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error in admin dashboard:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-4">
-          <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Đã xảy ra lỗi</h2>
-          <p className="text-gray-400 mb-4">Không thể tải trang quản trị. Vui lòng thử lại sau.</p>
-          <Button onClick={() => window.location.reload()} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Tải lại trang
-          </Button>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-// Main Admin Dashboard Component
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
-  const router = useRouter();
-  const { toast } = useToast();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [currentPage, setCurrentPage] = useState<PageType>('dashboard');
-  const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const token = user?.id || '';
+  const { user, logout } = useAuth()
+  const [activeTab, setActiveTab] = useState("overview")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [isLoading, setIsLoading] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!user) {
-      router.push('/login');
-    }
-  }, [user, router]);
-
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(amount)
   }
 
-  // Helper function to render the current page with proper props
-  const renderPage = (page: PageType) => {
-    const commonProps = { token };
-    const dateRangeProps = {
-      ...commonProps,
-      startDate,
-      setStartDate,
-      endDate,
-      setEndDate,
-    };
+  const formatDate = (dateString: string) => {
+    return formatDistanceToNow(new Date(dateString), {
+      addSuffix: true,
+      locale: vi,
+    })
+  }
 
-    switch (page) {
-      case 'dashboard':
-        return <DashboardPage {...dateRangeProps} />;
-      case 'customers':
-        return <CustomersPage {...commonProps} />;
-      case 'order-history':
-        return <OrderHistoryPage {...dateRangeProps} />;
-      case 'trading-sessions':
-        return <TradingSessionsPage {...commonProps} />;
-      case 'deposit-requests':
-        return <DepositRequestsPage {...dateRangeProps} />;
-      case 'withdrawal-requests':
-        return <WithdrawalRequestsPage {...dateRangeProps} />;
-      case 'settings':
-        return <SettingsPage {...commonProps} />;
-      case 'identity-verification':
-        return <IdentityVerificationPage {...commonProps} />;
-      default:
-        return <div>Page not found</div>;
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      active: { label: "Hoạt động", variant: "default" as const },
+      inactive: { label: "Không hoạt động", variant: "secondary" as const },
+      pending: { label: "Chờ duyệt", variant: "outline" as const },
+      approved: { label: "Đã duyệt", variant: "default" as const },
+      rejected: { label: "Từ chối", variant: "destructive" as const },
+      processing: { label: "Đang xử lý", variant: "outline" as const },
+      completed: { label: "Hoàn thành", variant: "default" as const },
+      verified: { label: "Đã xác minh", variant: "default" as const },
     }
-  };
+
+    const config = statusConfig[status as keyof typeof statusConfig] || { label: status, variant: "secondary" as const }
+    return <Badge variant={config.variant}>{config.label}</Badge>
+  }
+
+  const handleUserAction = async (action: string, userId: string) => {
+    setIsLoading(true)
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      toast({
+        title: "Thành công",
+        description: `Đã ${action} người dùng thành công`,
+      })
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra, vui lòng thử lại",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDepositAction = async (action: string, depositId: string) => {
+    setIsLoading(true)
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      toast({
+        title: "Thành công",
+        description: `Đã ${action} yêu cầu nạp tiền`,
+      })
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra, vui lòng thử lại",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
-    <ErrorBoundary>
-      <div className="flex flex-col sm:flex-row min-h-screen bg-gray-900 text-white">
-        {/* Sidebar */}
-        <div className={`${isSidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 border-r border-gray-700 flex flex-col justify-between sm:sticky top-0`}>
-          <div>
-            <div className="flex items-center justify-between p-2 sm:p-4">
-              <Button variant="ghost" size="icon" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="sm:hidden">
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                </svg>
-              </Button>
-              {!isSidebarCollapsed && <span className="text-sm sm:text-lg font-semibold">Admin Dashboard</span>}
-              <Button variant="ghost" size="icon" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="hidden sm:block">
-                {isSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-              </Button>
-            </div>
-            <nav className="space-y-1 px-2">
-              {menuItems.map((item) => (
-                <Button
-                  key={item.id}
-                  variant={currentPage === item.id ? 'secondary' : 'ghost'}
-                  className={`w-full justify-start ${currentPage === item.id ? 'bg-gray-700' : ''}`}
-                  onClick={() => setCurrentPage(item.id)}
-                >
-                  <item.icon className="h-5 w-5 mr-2" />
-                  {!isSidebarCollapsed && <span className="text-sm">{item.title}</span>}
+    <ProtectedRoute requiredRole="admin">
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-600">Xin chào, {user?.username}</span>
+                <Button variant="outline" onClick={logout}>
+                  Đăng xuất
                 </Button>
-              ))}
-            </nav>
+              </div>
+            </div>
           </div>
-          <div className="p-2 sm:p-4">
-            <Button variant="ghost" className="w-full justify-start">
-              <HelpCircle className="h-5 w-5 mr-2" />
-              {!isSidebarCollapsed && <span className="text-sm">Hỗ trợ</span>}
-            </Button>
-          </div>
+        </header>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="overview">Tổng quan</TabsTrigger>
+              <TabsTrigger value="users">Khách hàng</TabsTrigger>
+              <TabsTrigger value="deposits">Nạp tiền</TabsTrigger>
+              <TabsTrigger value="withdrawals">Rút tiền</TabsTrigger>
+              <TabsTrigger value="orders">Lệnh giao dịch</TabsTrigger>
+            </TabsList>
+
+            {/* Overview Tab */}
+            <TabsContent value="overview" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Tổng người dùng</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{mockStats.totalUsers.toLocaleString()}</div>
+                    <p className="text-xs text-muted-foreground">+12% so với tháng trước</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Tổng nạp tiền</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{formatCurrency(mockStats.totalDeposits)}</div>
+                    <p className="text-xs text-muted-foreground">+8% so với tháng trước</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Tổng rút tiền</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{formatCurrency(mockStats.totalWithdrawals)}</div>
+                    <p className="text-xs text-muted-foreground">+5% so với tháng trước</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Lệnh đang hoạt động</CardTitle>
+                    <Activity className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{mockStats.activeOrders}</div>
+                    <p className="text-xs text-muted-foreground">-3% so với hôm qua</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Hoạt động gần đây</CardTitle>
+                    <CardDescription>Các giao dịch và hoạt động mới nhất</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Nạp tiền thành công</p>
+                          <p className="text-xs text-muted-foreground">user001 - 500,000 VND</p>
+                        </div>
+                        <span className="text-xs text-muted-foreground">2 phút trước</span>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Đăng ký mới</p>
+                          <p className="text-xs text-muted-foreground">user123 đã tạo tài khoản</p>
+                        </div>
+                        <span className="text-xs text-muted-foreground">5 phút trước</span>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Yêu cầu rút tiền</p>
+                          <p className="text-xs text-muted-foreground">user002 - 300,000 VND</p>
+                        </div>
+                        <span className="text-xs text-muted-foreground">10 phút trước</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Thống kê hôm nay</CardTitle>
+                    <CardDescription>Dữ liệu trong ngày</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Đăng ký mới</span>
+                        <span className="font-medium">12</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Nạp tiền</span>
+                        <span className="font-medium">8</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Rút tiền</span>
+                        <span className="font-medium">5</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Lệnh giao dịch</span>
+                        <span className="font-medium">156</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* Users Tab */}
+            <TabsContent value="users" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quản lý khách hàng</CardTitle>
+                  <CardDescription>Danh sách và quản lý tài khoản khách hàng</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                    <div className="flex-1">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Tìm kiếm theo tên, email, số điện thoại..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Lọc trạng thái" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tất cả</SelectItem>
+                        <SelectItem value="active">Hoạt động</SelectItem>
+                        <SelectItem value="inactive">Không hoạt động</SelectItem>
+                        <SelectItem value="verified">Đã xác minh</SelectItem>
+                        <SelectItem value="pending">Chờ xác minh</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Xuất Excel
+                    </Button>
+                  </div>
+
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Người dùng</TableHead>
+                          <TableHead>Liên hệ</TableHead>
+                          <TableHead>Số dư</TableHead>
+                          <TableHead>Trạng thái</TableHead>
+                          <TableHead>Xác minh</TableHead>
+                          <TableHead>Đăng ký</TableHead>
+                          <TableHead>Hoạt động cuối</TableHead>
+                          <TableHead className="text-right">Thao tác</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {mockUsers.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{user.fullName}</div>
+                                <div className="text-sm text-muted-foreground">@{user.username}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="text-sm">{user.email}</div>
+                                <div className="text-sm text-muted-foreground">{user.phone}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{formatCurrency(user.balance.available)}</div>
+                                {user.balance.frozen > 0 && (
+                                  <div className="text-sm text-orange-600">
+                                    Đóng băng: {formatCurrency(user.balance.frozen)}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                {getStatusBadge(user.status.active ? "active" : "inactive")}
+                                {user.status.betLocked && (
+                                  <Badge variant="destructive" className="text-xs">
+                                    Khóa cược
+                                  </Badge>
+                                )}
+                                {user.status.withdrawLocked && (
+                                  <Badge variant="destructive" className="text-xs">
+                                    Khóa rút
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>{getStatusBadge(user.verification.status)}</TableCell>
+                            <TableCell>
+                              <span className="text-sm">{formatDate(user.createdAt)}</span>
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm">{formatDate(user.lastLogin)}</span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedUser(user)
+                                    setIsEditModalOpen(true)
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleUserAction("xem chi tiết", user.id)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Deposits Tab */}
+            <TabsContent value="deposits" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Yêu cầu nạp tiền</CardTitle>
+                  <CardDescription>Quản lý các yêu cầu nạp tiền từ khách hàng</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Khách hàng</TableHead>
+                          <TableHead>Số tiền</TableHead>
+                          <TableHead>Ngân hàng</TableHead>
+                          <TableHead>Trạng thái</TableHead>
+                          <TableHead>Thời gian</TableHead>
+                          <TableHead className="text-right">Thao tác</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {mockDeposits.map((deposit) => (
+                          <TableRow key={deposit.id}>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{deposit.user.fullName}</div>
+                                <div className="text-sm text-muted-foreground">@{deposit.user.username}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-medium text-green-600">{formatCurrency(deposit.amount)}</span>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="text-sm font-medium">{deposit.bankInfo.bankName}</div>
+                                <div className="text-sm text-muted-foreground">{deposit.bankInfo.accountNumber}</div>
+                                <div className="text-sm text-muted-foreground">{deposit.bankInfo.accountName}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>{getStatusBadge(deposit.status)}</TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="text-sm">{formatDate(deposit.createdAt)}</div>
+                                {deposit.approvedAt && (
+                                  <div className="text-xs text-muted-foreground">
+                                    Duyệt: {formatDate(deposit.approvedAt)}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {deposit.status === "pending" && (
+                                <div className="flex justify-end space-x-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDepositAction("duyệt", deposit.id)}
+                                    disabled={isLoading}
+                                  >
+                                    <CheckCircle className="h-4 w-4 mr-1" />
+                                    Duyệt
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDepositAction("từ chối", deposit.id)}
+                                    disabled={isLoading}
+                                  >
+                                    <XCircle className="h-4 w-4 mr-1" />
+                                    Từ chối
+                                  </Button>
+                                </div>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Withdrawals Tab */}
+            <TabsContent value="withdrawals" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Yêu cầu rút tiền</CardTitle>
+                  <CardDescription>Quản lý các yêu cầu rút tiền từ khách hàng</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Khách hàng</TableHead>
+                          <TableHead>Số tiền</TableHead>
+                          <TableHead>Ngân hàng</TableHead>
+                          <TableHead>Trạng thái</TableHead>
+                          <TableHead>Thời gian</TableHead>
+                          <TableHead className="text-right">Thao tác</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {mockWithdrawals.map((withdrawal) => (
+                          <TableRow key={withdrawal.id}>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{withdrawal.user.fullName}</div>
+                                <div className="text-sm text-muted-foreground">@{withdrawal.user.username}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-medium text-red-600">-{formatCurrency(withdrawal.amount)}</span>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="text-sm font-medium">{withdrawal.bank.bankName}</div>
+                                <div className="text-sm text-muted-foreground">{withdrawal.bank.accountNumber}</div>
+                                <div className="text-sm text-muted-foreground">{withdrawal.bank.accountName}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>{getStatusBadge(withdrawal.status)}</TableCell>
+                            <TableCell>
+                              <span className="text-sm">{formatDate(withdrawal.createdAt)}</span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {withdrawal.status === "processing" && (
+                                <div className="flex justify-end space-x-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDepositAction("hoàn thành", withdrawal.id)}
+                                    disabled={isLoading}
+                                  >
+                                    <CheckCircle className="h-4 w-4 mr-1" />
+                                    Hoàn thành
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDepositAction("từ chối", withdrawal.id)}
+                                    disabled={isLoading}
+                                  >
+                                    <XCircle className="h-4 w-4 mr-1" />
+                                    Từ chối
+                                  </Button>
+                                </div>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Orders Tab */}
+            <TabsContent value="orders" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Lệnh giao dịch</CardTitle>
+                  <CardDescription>Theo dõi các lệnh giao dịch của khách hàng</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">Chức năng đang được phát triển</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col">
-          <header className="flex items-center justify-between p-2 sm:p-4 border-b border-gray-700">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <Bell className="h-5 w-5 text-gray-400" />
-              <span className="text-sm text-gray-400">Thông báo</span>
-            </div>
-            <UserMenu user={user} logout={logout} />
-          </header>
-          <main className="flex-1 p-2 sm:p-6 overflow-auto">
-            {renderPage(currentPage)}
-          </main>
-        </div>
+        {/* Edit User Modal */}
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Chỉnh sửa thông tin khách hàng</DialogTitle>
+              <DialogDescription>Cập nhật thông tin và trạng thái của khách hàng</DialogDescription>
+            </DialogHeader>
+            {selectedUser && (
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="fullName" className="text-right">
+                    Họ tên
+                  </Label>
+                  <Input id="fullName" defaultValue={selectedUser.fullName} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="email" className="text-right">
+                    Email
+                  </Label>
+                  <Input id="email" defaultValue={selectedUser.email} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="phone" className="text-right">
+                    Số điện thoại
+                  </Label>
+                  <Input id="phone" defaultValue={selectedUser.phone} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">
+                    Trạng thái
+                  </Label>
+                  <Select defaultValue={selectedUser.status.active ? "active" : "inactive"}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Hoạt động</SelectItem>
+                      <SelectItem value="inactive">Không hoạt động</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button type="submit" onClick={() => setIsEditModalOpen(false)}>
+                Lưu thay đổi
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-    </ErrorBoundary>
-  );
+    </ProtectedRoute>
+  )
 }

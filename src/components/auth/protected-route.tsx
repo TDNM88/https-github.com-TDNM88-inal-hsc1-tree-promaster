@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/useAuth"
@@ -11,11 +13,7 @@ interface ProtectedRouteProps {
   redirectTo?: string
 }
 
-export function ProtectedRoute({ 
-  children, 
-  requiredRole = "user", 
-  redirectTo = "/login" 
-}: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requiredRole = "user", redirectTo = "/login" }: ProtectedRouteProps) {
   const { user, isLoading, isAuthenticated, isAdmin } = useAuth()
   const router = useRouter()
 
@@ -40,8 +38,7 @@ export function ProtectedRoute({
     )
   }
 
-  if ((requiredRole === "user" && isAuthenticated()) || 
-      (requiredRole === "admin" && isAdmin())) {
+  if ((requiredRole === "user" && isAuthenticated()) || (requiredRole === "admin" && isAdmin())) {
     return <>{children}</>
   }
 
