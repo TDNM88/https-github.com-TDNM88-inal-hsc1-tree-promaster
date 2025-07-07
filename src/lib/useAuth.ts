@@ -41,13 +41,12 @@ type AuthContextType = {
   refreshUser: () => Promise<void>
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function useAuth() {
   const context = useContext(AuthContext)
   if (context === undefined) {
-    // If no context provider, create a standalone hook
-    return useAuthStandalone()
+    throw new Error("useAuth must be used within an AuthProvider")
   }
   return context
 }
@@ -153,8 +152,12 @@ function useAuthStandalone() {
   }
 }
 
+// AuthProvider component to wrap the application
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const auth = useAuthStandalone()
-
-  return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>
+  const auth = useAuthStandalone();
+  return (
+    <AuthContext.Provider value={auth}>
+      {children}
+    </AuthContext.Provider>
+  );
 }

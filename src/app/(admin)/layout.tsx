@@ -18,9 +18,9 @@ export default function AdminLayout({
 }) {
   return (
     <ProtectedRoute requiredRole="admin">
-      <html lang="vi">
-        <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>{children}</body>
-      </html>
+      <div className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
+        {children}
+      </div>
     </ProtectedRoute>
   )
 }

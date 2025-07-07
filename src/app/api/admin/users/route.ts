@@ -46,8 +46,9 @@ export async function GET(request: Request) {
     
     // Truy vấn database
     const users = await UserModel.find(query)
-      .select('-password') // Không trả về mật khẩu
+      .select('-password -verification') // Không trả về mật khẩu và thông tin xác minh nhạy cảm
       .limit(limit)
+      .lean() // Chuyển đổi sang plain JavaScript object
       .lean();
     
     // Nếu không có dữ liệu trong database, tạo dữ liệu mẫu
@@ -157,7 +158,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ message: 'Cập nhật thành công', user: updatedUser });
   } catch (error) {
     return NextResponse.json(
-      { message: 'Lỗi khi cập nhật người dùng', error: (error as Error).message },
+      { message: 'Đã xảy ra lỗi khi cập nhật thông tin người dùng' },
       { status: 500 }
     );
   }
@@ -166,14 +167,10 @@ export async function PUT(request: Request) {
 // API xóa người dùng
 export async function DELETE(request: Request) {
   try {
-    // Xác thực admin (nếu có xác thực)
-    try {
-      const admin = await getUserFromRequest(request);
-      if (!admin || admin.role !== 'admin') {
-        return NextResponse.json({ message: 'Không có quyền truy cập' }, { status: 403 });
-      }
-    } catch (authError) {
-      console.warn('Auth check bypassed in development:', authError);
+    // Xác thực admin
+    const admin = await getUserFromRequest(request);
+    if (!admin || admin.role !== 'admin') {
+      return NextResponse.json({ message: 'Không có quyền truy cập' }, { status: 403 });
     }
 
     // Lấy thông tin từ body
