@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import clientPromise from "@/lib/mongodb"
+import { ObjectId } from "mongodb"
 
 export const runtime = "nodejs"
 
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest) {
 
     // Transform data for frontend
     const transformedUsers = users.map((user) => ({
-      _id: user._id,
+      _id: user._id.toString(),
       username: user.username,
       fullName: user.fullName || "",
       email: user.email || "",
@@ -157,7 +158,7 @@ export async function PUT(request: NextRequest) {
       updateObject.updatedAt = new Date()
     }
 
-    const result = await usersCollection.updateOne({ _id: userId }, { $set: updateObject })
+    const result = await usersCollection.updateOne({ _id: new ObjectId(userId) }, { $set: updateObject })
 
     if (result.matchedCount === 0) {
       return NextResponse.json({ success: false, message: "Không tìm thấy người dùng" }, { status: 404 })
@@ -193,7 +194,7 @@ export async function DELETE(request: NextRequest) {
     const usersCollection = db.collection("users")
 
     // Check if user exists and is not an admin
-    const user = await usersCollection.findOne({ _id: userId })
+    const user = await usersCollection.findOne({ _id: new ObjectId(userId) })
 
     if (!user) {
       return NextResponse.json({ success: false, message: "Không tìm thấy người dùng" }, { status: 404 })
@@ -203,7 +204,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Không thể xóa tài khoản quản trị" }, { status: 403 })
     }
 
-    const result = await usersCollection.deleteOne({ _id: userId })
+    const result = await usersCollection.deleteOne({ _id: new ObjectId(userId) })
 
     if (result.deletedCount === 0) {
       return NextResponse.json({ success: false, message: "Không thể xóa người dùng" }, { status: 500 })
@@ -282,7 +283,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Tạo tài khoản thành công",
-      userId: result.insertedId,
+      userId: result.insertedId.toString(),
     })
   } catch (error) {
     console.error("Error creating user:", error)
