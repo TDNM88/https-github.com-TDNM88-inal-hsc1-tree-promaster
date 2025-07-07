@@ -1,10 +1,9 @@
 "use client"
 
-import type React from "react"
-
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/useAuth"
+import { Loader2 } from "lucide-react"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -12,46 +11,43 @@ interface ProtectedRouteProps {
   redirectTo?: string
 }
 
-export function ProtectedRoute({ children, requiredRole = "user", redirectTo }: ProtectedRouteProps) {
+export function ProtectedRoute({ 
+  children, 
+  requiredRole = "user", 
+  redirectTo = "/login" 
+}: ProtectedRouteProps) {
   const { user, isLoading, isAuthenticated, isAdmin } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!isLoading) {
-      if (!isAuthenticated()) {
-        // Not authenticated, redirect to login
-        const loginUrl = redirectTo ? `/login?callbackUrl=${encodeURIComponent(redirectTo)}` : "/login"
-        router.push(loginUrl)
-        return
-      }
+    if (isLoading) return
 
-      if (requiredRole === "admin" && !isAdmin()) {
-        // User is not admin but trying to access admin route
-        router.push("/")
-        return
-      }
+    if (!isAuthenticated()) {
+      router.push(redirectTo)
+      return
+    }
 
-      if (requiredRole === "user" && isAdmin()) {
-        // Admin trying to access user route, redirect to admin
-        router.push("/admin")
-        return
-      }
+    if (requiredRole === "admin" && !isAdmin()) {
+      router.push(redirectTo)
     }
   }, [isLoading, isAuthenticated, isAdmin, requiredRole, router, redirectTo])
 
-  // Show loading spinner while checking auth
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     )
   }
 
-  // Don't render anything if not authenticated or wrong role
-  if (!isAuthenticated() || (requiredRole === "admin" && !isAdmin()) || (requiredRole === "user" && isAdmin())) {
-    return null
+  if ((requiredRole === "user" && isAuthenticated()) || 
+      (requiredRole === "admin" && isAdmin())) {
+    return <>{children}</>
   }
 
-  return <>{children}</>
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader2 className="h-8 w-8 animate-spin" />
+    </div>
+  )
 }
