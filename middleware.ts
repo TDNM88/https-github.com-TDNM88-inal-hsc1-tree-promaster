@@ -2,11 +2,15 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const session = request.cookies.get("admin-session")
+  const isLoginPage = request.nextUrl.pathname === "/login"
 
-  // Redirect root to admin dashboard directly
-  if (pathname === "/") {
-    return NextResponse.redirect(new URL("/admin", request.url))
+  if (!session && !isLoginPage) {
+    return NextResponse.redirect(new URL("/login", request.url))
+  }
+
+  if (session && isLoginPage) {
+    return NextResponse.redirect(new URL("/", request.url))
   }
 
   return NextResponse.next()

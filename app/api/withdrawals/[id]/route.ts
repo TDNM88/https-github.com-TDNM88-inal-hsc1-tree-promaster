@@ -1,26 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getUserFromRequest } from "@/lib/auth"
+import { Database } from "@/lib/database"
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = getUserFromRequest(request)
-
-    if (!user || user.role !== "admin") {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 403 })
-    }
-
     const { status } = await request.json()
-
-    // Mock update
-    const updatedWithdrawal = {
-      id: params.id,
-      status,
-      updatedAt: new Date().toISOString(),
-    }
-
-    return NextResponse.json(updatedWithdrawal)
+    await Database.updateWithdrawalRequest(params.id, status)
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Withdrawal update error:", error)
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to update withdrawal request" }, { status: 500 })
   }
 }

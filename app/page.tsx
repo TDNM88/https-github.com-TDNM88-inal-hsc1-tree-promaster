@@ -1,21 +1,13 @@
-"use client"
+import { AdminDashboard } from "@/components/admin-dashboard"
+import { isAuthenticated } from "@/lib/auth"
+import { redirect } from "next/navigation"
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+export default async function Page() {
+  const authenticated = await isAuthenticated()
 
-export default function HomePage() {
-  const router = useRouter()
+  if (!authenticated) {
+    redirect("/login")
+  }
 
-  useEffect(() => {
-    // Automatically redirect to admin dashboard
-    router.push("/admin")
-  }, [router])
-
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold">Đang chuyển hướng đến Admin Dashboard...</h1>
-      </div>
-    </div>
-  )
+  return <AdminDashboard />
 }
