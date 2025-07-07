@@ -250,31 +250,77 @@ function DashboardPage({ startDate, setStartDate, endDate, setEndDate, token }: 
   )
 }
 
-// Customers Page Component
+// Enhanced Customers Page Component with dynamic data fetching
 function CustomersPage({ token }: any) {
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [sortBy, setSortBy] = useState("createdAt")
+  const [sortOrder, setSortOrder] = useState("desc")
   const [editingCustomer, setEditingCustomer] = useState<any>(null)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
   const [editForm, setEditForm] = useState({
     username: "",
     password: "",
     balance: 0,
     frozenBalance: 0,
     fullName: "",
+    email: "",
+    phone: "",
     bankName: "",
     accountNumber: "",
     accountHolder: "",
   })
 
-  const { data, isLoading, mutate } = useSWR(
-    token ? `/api/admin/users?search=${searchTerm}&status=${statusFilter}` : null,
-    (url) => fetcher(url, token),
-    { refreshInterval: 5000 },
-  )
+  // Build API URL with query parameters
+  const buildApiUrl = () => {
+    const params = new URLSearchParams({
+      search: searchTerm,
+      status: statusFilter,
+      page: currentPage.toString(),
+      limit: pageSize.toString(),
+      sortBy,
+      sortOrder,
+    })
+    return `/api/admin/users?${params.toString()}`
+  }
+
+  const { data, isLoading, error, mutate } = useSWR(token ? buildApiUrl() : null, (url) => fetcher(url, token), {
+    refreshInterval: 30000, // Refresh every 30 seconds
+    revalidateOnFocus: true,
+    errorRetryCount: 3,
+  })
 
   const customers = data?.users || []
+  const pagination = data?.pagination || {}
+
+  // Handle search with debouncing
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setCurrentPage(1) // Reset to first page when searching
+      mutate()
+    }, 500)
+
+    return () => clearTimeout(timeoutId)
+  }, [searchTerm, statusFilter])
+
+  // Handle pagination change
+  useEffect(() => {
+    mutate()
+  }, [currentPage, pageSize, sortBy, sortOrder])
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+    } else {
+      setSortBy(field)
+      setSortOrder("asc")
+    }
+    setCurrentPage(1)
+  }
 
   const toggleCustomerStatus = async (customerId: string, field: string, currentValue: boolean) => {
     try {
@@ -287,8 +333,10 @@ function CustomersPage({ token }: any) {
           value: !currentValue,
         }),
       })
+
       const result = await res.json()
-      if (res.ok) {
+
+      if (result.success) {
         toast({ title: "Thành công", description: `Đã cập nhật trạng thái ${field}` })
         mutate()
       } else {
@@ -308,11 +356,29 @@ function CustomersPage({ token }: any) {
       balance: customer?.balance?.available || 0,
       frozenBalance: customer?.balance?.frozen || 0,
       fullName: customer?.fullName || "",
+      email: customer?.email || "",
+      phone: customer?.phone || "",
       bankName: customer?.bank?.name || "",
       accountNumber: customer?.bank?.accountNumber || "",
       accountHolder: customer?.bank?.accountHolder || "",
     })
     setShowEditModal(true)
+  }
+
+  const handleCreateCustomer = () => {
+    setEditForm({
+      username: "",
+      password: "",
+      balance: 0,
+      frozenBalance: 0,
+      fullName: "",
+      email: "",
+      phone: "",
+      bankName: "",
+      accountNumber: "",
+      accountHolder: "",
+    })
+    setShowCreateModal(true)
   }
 
   const handleSaveCustomer = async () => {
@@ -321,17 +387,16 @@ function CustomersPage({ token }: any) {
     try {
       const updates = [
         { field: "fullName", value: editForm.fullName },
+        { field: "email", value: editForm.email },
+        { field: "phone", value: editForm.phone },
         { field: "balance.available", value: Number(editForm.balance) },
         { field: "balance.frozen", value: Number(editForm.frozenBalance) },
       ]
 
-      // Chỉ cập nhật mật khẩu nếu có nhập
       if (editForm.password) {
         updates.push({ field: "password", value: editForm.password })
       }
 
-      // Cập nhật thông tin ngân hàng
-      // Nếu có ít nhất một trường thông tin ngân hàng được nhập
       if (editForm.bankName || editForm.accountNumber || editForm.accountHolder) {
         if (editForm.bankName) {
           updates.push({ field: "bank.name", value: editForm.bankName })
@@ -344,8 +409,6 @@ function CustomersPage({ token }: any) {
         }
       }
 
-      // Send updates one by one
-      const success = true
       for (const update of updates) {
         const res = await fetch("/api/admin/users", {
           method: "PUT",
@@ -357,8 +420,8 @@ function CustomersPage({ token }: any) {
           }),
         })
 
-        if (!res.ok) {
-          const result = await res.json()
+        const result = await res.json()
+        if (!result.success) {
           throw new Error(result.message || "Có lỗi xảy ra khi cập nhật thông tin")
         }
       }
@@ -373,6 +436,49 @@ function CustomersPage({ token }: any) {
         variant: "destructive",
         title: "Lỗi",
         description: error.message || "Không thể cập nhật thông tin khách hàng",
+      })
+    }
+  }
+
+  const handleCreateNewCustomer = async () => {
+    if (!editForm.username || !editForm.password) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Tên đăng nhập và mật khẩu là bắt buộc",
+      })
+      return
+    }
+
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          username: editForm.username,
+          password: editForm.password,
+          fullName: editForm.fullName,
+          email: editForm.email,
+          phone: editForm.phone,
+          balance: Number(editForm.balance),
+        }),
+      })
+
+      const result = await res.json()
+
+      if (result.success) {
+        toast({ title: "Thành công", description: "Đã tạo tài khoản mới" })
+        mutate()
+        setShowCreateModal(false)
+      } else {
+        toast({ variant: "destructive", title: "Lỗi", description: result.message })
+      }
+    } catch (error: any) {
+      console.error("Error creating customer:", error)
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể tạo tài khoản mới",
       })
     }
   }
@@ -392,7 +498,7 @@ function CustomersPage({ token }: any) {
 
       const result = await res.json()
 
-      if (res.ok) {
+      if (result.success) {
         toast({
           title: "Thành công",
           description: result.message || "Đã xóa khách hàng",
@@ -411,6 +517,50 @@ function CustomersPage({ token }: any) {
     }
   }
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(amount)
+  }
+
+  const formatDate = (dateString: string | Date) => {
+    if (!dateString) return "Chưa có"
+    return new Date(dateString).toLocaleString("vi-VN")
+  }
+
+  const resetFilters = () => {
+    setSearchTerm("")
+    setStatusFilter("all")
+    setCurrentPage(1)
+    setSortBy("createdAt")
+    setSortOrder("desc")
+  }
+
+  // Error handling
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
+          <Home className="h-4 w-4" />
+          <span>/</span>
+          <span>Khách hàng</span>
+        </div>
+        <Card className="bg-gray-800 border-gray-700">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-medium text-white mb-2">Lỗi tải dữ liệu</h3>
+            <p className="text-gray-400 text-center mb-4">Không thể tải danh sách khách hàng. Vui lòng thử lại.</p>
+            <Button onClick={() => mutate()} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Thử lại
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
@@ -418,14 +568,16 @@ function CustomersPage({ token }: any) {
         <span>/</span>
         <span>Khách hàng</span>
       </div>
+
+      {/* Filters and Search */}
       <div className="flex flex-col sm:flex-row items-center gap-4 mb-4">
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Label>Tìm kiếm</Label>
           <Input
-            placeholder="Tìm theo username, ID"
+            placeholder="Tìm theo username, tên, email, SĐT"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full sm:w-64"
+            className="w-full sm:w-64 bg-gray-700 text-white"
           />
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -438,93 +590,260 @@ function CustomersPage({ token }: any) {
               <SelectItem value="all">Tất cả</SelectItem>
               <SelectItem value="active">Hoạt động</SelectItem>
               <SelectItem value="inactive">Không hoạt động</SelectItem>
+              <SelectItem value="verified">Đã xác minh</SelectItem>
+              <SelectItem value="unverified">Chưa xác minh</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <Button variant="outline" size="sm" className="w-full sm:w-auto bg-transparent">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Label>Hiển thị</Label>
+          <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number(value))}>
+            <SelectTrigger className="w-full sm:w-20 bg-gray-700 border-gray-600 text-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-700 text-white">
+              <SelectItem value="5">5</SelectItem>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button variant="outline" size="sm" onClick={resetFilters} className="w-full sm:w-auto bg-transparent">
           Đặt lại
         </Button>
-        <Button size="sm" className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">
-          Áp dụng
+        <Button onClick={handleCreateCustomer} className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">
+          + Thêm tài khoản
         </Button>
       </div>
-      <div className="flex justify-end mb-4">
-        <Button className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">+ Thêm tài khoản</Button>
-      </div>
+
+      {/* Users Table */}
       <Card className="bg-gray-800 border-gray-700">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-white">Danh sách khách hàng</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base font-semibold text-white">
+            Danh sách khách hàng ({pagination.totalUsers || 0})
+          </CardTitle>
+          <Button variant="outline" size="sm" onClick={() => mutate()} disabled={isLoading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+            Làm mới
+          </Button>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           {isLoading ? (
-            <div className="flex justify-center">
+            <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            </div>
+          ) : customers.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-white mb-2">Không có dữ liệu</h3>
+              <p className="text-gray-400">Không tìm thấy khách hàng nào phù hợp với bộ lọc.</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-white">Tên đăng nhập</TableHead>
-                  <TableHead className="text-white">Số dư</TableHead>
-                  <TableHead className="text-white">Ip login</TableHead>
-                  <TableHead className="text-white">Thông tin xác minh</TableHead>
+                  <TableHead
+                    className="text-white cursor-pointer hover:text-blue-400"
+                    onClick={() => handleSort("username")}
+                  >
+                    Tên đăng nhập {sortBy === "username" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                  <TableHead
+                    className="text-white cursor-pointer hover:text-blue-400"
+                    onClick={() => handleSort("fullName")}
+                  >
+                    Họ và tên {sortBy === "fullName" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                  <TableHead className="text-white">Email</TableHead>
+                  <TableHead className="text-white">Số điện thoại</TableHead>
+                  <TableHead
+                    className="text-white cursor-pointer hover:text-blue-400"
+                    onClick={() => handleSort("balance.available")}
+                  >
+                    Số dư {sortBy === "balance.available" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </TableHead>
                   <TableHead className="text-white">Trạng thái</TableHead>
+                  <TableHead className="text-white">Xác minh</TableHead>
+                  <TableHead
+                    className="text-white cursor-pointer hover:text-blue-400"
+                    onClick={() => handleSort("createdAt")}
+                  >
+                    Ngày tạo {sortBy === "createdAt" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                  <TableHead
+                    className="text-white cursor-pointer hover:text-blue-400"
+                    onClick={() => handleSort("lastLoginAt")}
+                  >
+                    Đăng nhập cuối {sortBy === "lastLoginAt" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </TableHead>
                   <TableHead className="text-white">Hành động</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {Array.isArray(customers) &&
-                  customers.map((customer) => (
-                    <TableRow key={customer._id}>
-                      <TableCell>{customer.username}</TableCell>
-                      <TableCell>{(customer.balance?.available || 0).toLocaleString()} VNĐ</TableCell>
-                      <TableCell>{customer.lastLoginIp || "N/A"}</TableCell>
-                      <TableCell>
-                        {customer.verification?.verified ? (
-                          <Badge variant="success">Đã xác minh</Badge>
-                        ) : (
-                          <Badge variant="destructive">Chưa xác minh</Badge>
+                {customers.map((customer: any) => (
+                  <TableRow key={customer._id} className="hover:bg-gray-700/50">
+                    <TableCell className="font-medium text-teal-400">{customer.username}</TableCell>
+                    <TableCell className="text-white">{customer.fullName || "Chưa có"}</TableCell>
+                    <TableCell className="text-white">{customer.email || "Chưa có"}</TableCell>
+                    <TableCell className="text-white">{customer.phone || "Chưa có"}</TableCell>
+                    <TableCell className="text-white">
+                      <div>
+                        <div>{formatCurrency(customer.balance?.available || 0)}</div>
+                        {customer.balance?.frozen > 0 && (
+                          <div className="text-xs text-orange-400">
+                            Đóng băng: {formatCurrency(customer.balance.frozen)}
+                          </div>
                         )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-2 h-2 rounded-full ${customer.status?.active ? "bg-green-500" : "bg-red-500"}`}
-                          ></div>
-                          <span>{customer.status?.active ? "Hoạt động" : "Khóa"}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleEditCustomer(customer)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteCustomer(customer._id)}
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-2 h-2 rounded-full ${customer.status?.active ? "bg-green-500" : "bg-red-500"}`}
+                        ></div>
+                        <span className="text-white">{customer.status?.active ? "Hoạt động" : "Khóa"}</span>
+                        {customer.status?.suspended && (
+                          <Badge variant="destructive" className="text-xs">
+                            Tạm khóa
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {customer.verification?.verified ? (
+                        <Badge variant="default" className="bg-green-500">
+                          Đã xác minh
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive">Chưa xác minh</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-white">{formatDate(customer.createdAt)}</TableCell>
+                    <TableCell className="text-white">
+                      <div>
+                        <div>{formatDate(customer.lastLoginAt)}</div>
+                        {customer.lastLoginIp && <div className="text-xs text-gray-400">{customer.lastLoginIp}</div>}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => handleEditCustomer(customer)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleCustomerStatus(customer._id, "active", customer.status?.active)}
+                          className={
+                            customer.status?.active
+                              ? "text-red-500 hover:text-red-600"
+                              : "text-green-500 hover:text-green-600"
+                          }
+                        >
+                          {customer.status?.active ? (
+                            <XCircle className="h-4 w-4" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteCustomer(customer._id)}
+                          className="text-red-500 hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           )}
         </CardContent>
       </Card>
 
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-sm text-gray-400">
+            Hiển thị {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, pagination.totalUsers)}
+            trong tổng số {pagination.totalUsers} khách hàng
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className="text-white border-gray-600 bg-transparent"
+            >
+              Đầu
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={!pagination.hasPrevPage}
+              className="text-white border-gray-600 bg-transparent"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            {/* Page numbers */}
+            {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+              const pageNum = Math.max(1, currentPage - 2) + i
+              if (pageNum > pagination.totalPages) return null
+
+              return (
+                <Button
+                  key={pageNum}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={
+                    currentPage === pageNum
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "text-white border-gray-600 bg-transparent"
+                  }
+                >
+                  {pageNum}
+                </Button>
+              )
+            })}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={!pagination.hasNextPage}
+              className="text-white border-gray-600 bg-transparent"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(pagination.totalPages)}
+              disabled={currentPage === pagination.totalPages}
+              className="text-white border-gray-600 bg-transparent"
+            >
+              Cuối
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Edit Customer Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="bg-gray-800 text-white border-gray-700">
+        <DialogContent className="bg-gray-800 text-white border-gray-700 max-w-2xl">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa thông tin khách hàng</DialogTitle>
             <DialogDescription>Cập nhật thông tin tài khoản khách hàng</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 max-h-96 overflow-y-auto">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="username" className="text-right">
                 Tên đăng nhập
@@ -533,7 +852,7 @@ function CustomersPage({ token }: any) {
                 id="username"
                 value={editForm.username}
                 onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
-                className="col-span-3"
+                className="col-span-3 bg-gray-700"
                 disabled
               />
             </div>
@@ -546,8 +865,42 @@ function CustomersPage({ token }: any) {
                 type="password"
                 value={editForm.password}
                 onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
-                className="col-span-3"
+                className="col-span-3 bg-gray-700"
                 placeholder="Để trống nếu không đổi mật khẩu"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="fullName" className="text-right">
+                Họ và tên
+              </Label>
+              <Input
+                id="fullName"
+                value={editForm.fullName}
+                onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                className="col-span-3 bg-gray-700"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="email" className="text-right">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                className="col-span-3 bg-gray-700"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="phone" className="text-right">
+                Số điện thoại
+              </Label>
+              <Input
+                id="phone"
+                value={editForm.phone}
+                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                className="col-span-3 bg-gray-700"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -559,7 +912,7 @@ function CustomersPage({ token }: any) {
                 type="number"
                 value={editForm.balance}
                 onChange={(e) => setEditForm({ ...editForm, balance: Number(e.target.value) })}
-                className="col-span-3"
+                className="col-span-3 bg-gray-700"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -571,18 +924,7 @@ function CustomersPage({ token }: any) {
                 type="number"
                 value={editForm.frozenBalance}
                 onChange={(e) => setEditForm({ ...editForm, frozenBalance: Number(e.target.value) })}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="fullName" className="text-right">
-                Họ và tên
-              </Label>
-              <Input
-                id="fullName"
-                value={editForm.fullName}
-                onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
-                className="col-span-3"
+                className="col-span-3 bg-gray-700"
               />
             </div>
             <div className="border-t border-gray-700 my-4 pt-4">
@@ -596,7 +938,7 @@ function CustomersPage({ token }: any) {
                     id="bankName"
                     value={editForm.bankName}
                     onChange={(e) => setEditForm({ ...editForm, bankName: e.target.value })}
-                    className="col-span-3"
+                    className="col-span-3 bg-gray-700"
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -607,7 +949,7 @@ function CustomersPage({ token }: any) {
                     id="accountNumber"
                     value={editForm.accountNumber}
                     onChange={(e) => setEditForm({ ...editForm, accountNumber: e.target.value })}
-                    className="col-span-3"
+                    className="col-span-3 bg-gray-700"
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -618,7 +960,7 @@ function CustomersPage({ token }: any) {
                     id="accountHolder"
                     value={editForm.accountHolder}
                     onChange={(e) => setEditForm({ ...editForm, accountHolder: e.target.value })}
-                    className="col-span-3"
+                    className="col-span-3 bg-gray-700"
                   />
                 </div>
               </div>
@@ -629,6 +971,99 @@ function CustomersPage({ token }: any) {
               Hủy
             </Button>
             <Button onClick={handleSaveCustomer}>Lưu thay đổi</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Customer Modal */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="bg-gray-800 text-white border-gray-700 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Tạo tài khoản mới</DialogTitle>
+            <DialogDescription>Thêm khách hàng mới vào hệ thống</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4 max-h-96 overflow-y-auto">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-username" className="text-right">
+                Tên đăng nhập *
+              </Label>
+              <Input
+                id="new-username"
+                value={editForm.username}
+                onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                className="col-span-3 bg-gray-700"
+                placeholder="Nhập tên đăng nhập"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-password" className="text-right">
+                Mật khẩu *
+              </Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={editForm.password}
+                onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                className="col-span-3 bg-gray-700"
+                placeholder="Nhập mật khẩu"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-fullName" className="text-right">
+                Họ và tên
+              </Label>
+              <Input
+                id="new-fullName"
+                value={editForm.fullName}
+                onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                className="col-span-3 bg-gray-700"
+                placeholder="Nhập họ và tên"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-email" className="text-right">
+                Email
+              </Label>
+              <Input
+                id="new-email"
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                className="col-span-3 bg-gray-700"
+                placeholder="Nhập email"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-phone" className="text-right">
+                Số điện thoại
+              </Label>
+              <Input
+                id="new-phone"
+                value={editForm.phone}
+                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                className="col-span-3 bg-gray-700"
+                placeholder="Nhập số điện thoại"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-balance" className="text-right">
+                Số dư ban đầu
+              </Label>
+              <Input
+                id="new-balance"
+                type="number"
+                value={editForm.balance}
+                onChange={(e) => setEditForm({ ...editForm, balance: Number(e.target.value) })}
+                className="col-span-3 bg-gray-700"
+                placeholder="0"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateModal(false)}>
+              Hủy
+            </Button>
+            <Button onClick={handleCreateNewCustomer}>Tạo tài khoản</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
