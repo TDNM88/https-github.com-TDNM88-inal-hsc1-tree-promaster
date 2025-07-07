@@ -30,8 +30,8 @@ export function getUserFromRequest(request: NextRequest): User | null {
 export async function authenticate(username: string, password: string): Promise<User | null> {
   // Mock authentication - replace with real database lookup
   const users = [
-    { id: "1", username: "admin", password: "password", role: "admin" as const },
-    { id: "2", username: "user", password: "password", role: "user" as const },
+    { id: "1", username: "admin", password: "admin123", role: "admin" as const },
+    { id: "2", username: "user", password: "user123", role: "user" as const },
   ]
 
   const user = users.find((u) => u.username === username && u.password === password)

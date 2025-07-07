@@ -21,12 +21,12 @@ export default function TradePage() {
         <div className="px-4 py-6 sm:px-0">
           <Card>
             <CardHeader>
-              <CardTitle>Welcome to Trading Platform</CardTitle>
-              <CardDescription>Start trading binary options with our advanced platform</CardDescription>
+              <CardTitle>Chào mừng đến với nền tảng giao dịch</CardTitle>
+              <CardDescription>Bắt đầu giao dịch binary options với nền tảng tiên tiến của chúng tôi</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600">
-                Trading interface will be implemented here. This is a placeholder for the user trading dashboard.
+                Giao diện giao dịch sẽ được triển khai tại đây. Đây là trang dành cho người dùng thường.
               </p>
             </CardContent>
           </Card>

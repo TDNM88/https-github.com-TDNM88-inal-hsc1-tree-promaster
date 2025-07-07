@@ -32,11 +32,11 @@ export default function LoginPage() {
 
       if (response.ok) {
         toast({
-          title: "Login successful",
-          description: "Welcome back!",
+          title: "Đăng nhập thành công",
+          description: "Chào mừng bạn quay trở lại!",
         })
 
-        // Redirect based on role
+        // Tự động chuyển hướng dựa trên vai trò
         if (data.user.role === "admin") {
           router.push("/admin")
         } else {
@@ -44,15 +44,15 @@ export default function LoginPage() {
         }
       } else {
         toast({
-          title: "Login failed",
-          description: data.message || "Invalid credentials",
+          title: "Đăng nhập thất bại",
+          description: data.message || "Thông tin đăng nhập không đúng",
           variant: "destructive",
         })
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
+        title: "Lỗi",
+        description: "Có lỗi xảy ra. Vui lòng thử lại.",
         variant: "destructive",
       })
     } finally {
@@ -64,13 +64,13 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Login</CardTitle>
-          <CardDescription>Enter your credentials to access the dashboard</CardDescription>
+          <CardTitle>Đăng nhập hệ thống</CardTitle>
+          <CardDescription>Nhập thông tin đăng nhập để truy cập dashboard</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">Tên đăng nhập</Label>
               <Input
                 id="username"
                 type="text"
@@ -80,7 +80,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Mật khẩu</Label>
               <Input
                 id="password"
                 type="password"
@@ -90,13 +90,13 @@ export default function LoginPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
             </Button>
           </form>
           <div className="mt-4 text-sm text-gray-600">
-            <p>Demo credentials:</p>
-            <p>Admin: admin / password</p>
-            <p>User: user / password</p>
+            <p>Tài khoản demo:</p>
+            <p>Admin: admin / admin123</p>
+            <p>User: user / user123</p>
           </div>
         </CardContent>
       </Card>

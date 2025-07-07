@@ -3,52 +3,68 @@
 import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { UserMenu } from "@/components/user-menu"
+import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
+import { UserMenu } from "@/components/user-menu"
+import { Users, TrendingUp, TrendingDown, Activity } from "lucide-react"
 
 interface Customer {
   id: string
   name: string
   email: string
+  phone: string
   balance: number
   status: string
   joinDate: string
+  totalDeposits: number
+  totalWithdrawals: number
 }
 
 interface Deposit {
   id: string
-  customerId: string
-  customerName: string
+  userId: string
+  userName: string
   amount: number
-  status: string
   method: string
-  date: string
+  status: string
+  createdAt: string
+  bankInfo?: string
+  approvedAt?: string
+  rejectedAt?: string
+  rejectionReason?: string
 }
 
 interface Withdrawal {
   id: string
-  customerId: string
-  customerName: string
+  userId: string
+  userName: string
   amount: number
-  status: string
   method: string
-  date: string
+  status: string
+  createdAt: string
+  bankInfo?: string
+  approvedAt?: string
+  rejectedAt?: string
+  rejectionReason?: string
 }
 
 interface Order {
   id: string
-  customerId: string
-  customerName: string
+  userId: string
+  userName: string
   asset: string
   type: string
   amount: number
-  status: string
-  result?: string
-  payout?: number
-  date: string
+  openPrice: number
+  closePrice: number
+  result: string
+  profit: number
+  openTime: string
+  closeTime: string
+  duration: string
 }
 
 export function AdminDashboard() {
@@ -58,8 +74,6 @@ export function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
-
-  const user = { username: "admin", role: "admin" }
 
   useEffect(() => {
     fetchData()
@@ -74,14 +88,21 @@ export function AdminDashboard() {
         fetch("/api/orders"),
       ])
 
-      if (customersRes.ok) setCustomers(await customersRes.json())
-      if (depositsRes.ok) setDeposits(await depositsRes.json())
-      if (withdrawalsRes.ok) setWithdrawals(await withdrawalsRes.json())
-      if (ordersRes.ok) setOrders(await ordersRes.json())
+      const [customersData, depositsData, withdrawalsData, ordersData] = await Promise.all([
+        customersRes.json(),
+        depositsRes.json(),
+        withdrawalsRes.json(),
+        ordersRes.json(),
+      ])
+
+      setCustomers(customersData.customers || [])
+      setDeposits(depositsData.deposits || [])
+      setWithdrawals(withdrawalsData.withdrawals || [])
+      setOrders(ordersData.orders || [])
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to fetch data",
+        title: "Lỗi",
+        description: "Không thể tải dữ liệu",
         variant: "destructive",
       })
     } finally {
@@ -89,15 +110,119 @@ export function AdminDashboard() {
     }
   }
 
+  const updateCustomerStatus = async (id: string, status: string) => {
+    try {
+      const response = await fetch("/api/customers", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status }),
+      })
+
+      if (response.ok) {
+        setCustomers(customers.map((c) => (c.id === id ? { ...c, status } : c)))
+        toast({
+          title: "Thành công",
+          description: "Cập nhật trạng thái khách hàng thành công",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể cập nhật trạng thái",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const updateDepositStatus = async (id: string, status: string, rejectionReason?: string) => {
+    try {
+      const response = await fetch("/api/deposits", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status, rejectionReason }),
+      })
+
+      if (response.ok) {
+        setDeposits(deposits.map((d) => (d.id === id ? { ...d, status } : d)))
+        toast({
+          title: "Thành công",
+          description: "Cập nhật yêu cầu nạp tiền thành công",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể cập nhật yêu cầu",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const updateWithdrawalStatus = async (id: string, status: string, rejectionReason?: string) => {
+    try {
+      const response = await fetch("/api/withdrawals", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status, rejectionReason }),
+      })
+
+      if (response.ok) {
+        setWithdrawals(withdrawals.map((w) => (w.id === id ? { ...w, status } : w)))
+        toast({
+          title: "Thành công",
+          description: "Cập nhật yêu cầu rút tiền thành công",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể cập nhật yêu cầu",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(amount)
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString("vi-VN")
+  }
+
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+      active: "default",
+      suspended: "destructive",
+      pending: "secondary",
+      approved: "default",
+      rejected: "destructive",
+      win: "default",
+      loss: "destructive",
+    }
+    return <Badge variant={variants[status] || "outline"}>{status}</Badge>
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold">Loading...</h2>
+          <h2 className="text-2xl font-bold">Đang tải...</h2>
         </div>
       </div>
     )
   }
+
+  // Calculate statistics
+  const totalCustomers = customers.length
+  const activeCustomers = customers.filter((c) => c.status === "active").length
+  const totalDeposits = deposits.reduce((sum, d) => sum + d.amount, 0)
+  const totalWithdrawals = withdrawals.reduce((sum, w) => sum + w.amount, 0)
+  const pendingDeposits = deposits.filter((d) => d.status === "pending").length
+  const pendingWithdrawals = withdrawals.filter((w) => w.status === "pending").length
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -105,72 +230,86 @@ export function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-            <UserMenu user={user} />
+            <UserMenu user={{ username: "admin", role: "admin" }} />
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+                <CardTitle className="text-sm font-medium">Tổng khách hàng</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{customers.length}</div>
+                <div className="text-2xl font-bold">{totalCustomers}</div>
+                <p className="text-xs text-muted-foreground">{activeCustomers} đang hoạt động</p>
               </CardContent>
             </Card>
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Deposits</CardTitle>
+                <CardTitle className="text-sm font-medium">Tổng nạp tiền</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{deposits.filter((d) => d.status === "pending").length}</div>
+                <div className="text-2xl font-bold">{formatCurrency(totalDeposits)}</div>
+                <p className="text-xs text-muted-foreground">{pendingDeposits} yêu cầu chờ duyệt</p>
               </CardContent>
             </Card>
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Withdrawals</CardTitle>
+                <CardTitle className="text-sm font-medium">Tổng rút tiền</CardTitle>
+                <TrendingDown className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{withdrawals.filter((w) => w.status === "pending").length}</div>
+                <div className="text-2xl font-bold">{formatCurrency(totalWithdrawals)}</div>
+                <p className="text-xs text-muted-foreground">{pendingWithdrawals} yêu cầu chờ duyệt</p>
               </CardContent>
             </Card>
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+                <CardTitle className="text-sm font-medium">Tổng giao dịch</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{orders.length}</div>
+                <p className="text-xs text-muted-foreground">Hôm nay</p>
               </CardContent>
             </Card>
           </div>
 
+          {/* Main Content Tabs */}
           <Tabs defaultValue="customers" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="customers">Customers</TabsTrigger>
-              <TabsTrigger value="deposits">Deposits</TabsTrigger>
-              <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
-              <TabsTrigger value="orders">Orders</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="customers">Khách hàng</TabsTrigger>
+              <TabsTrigger value="deposits">Nạp tiền</TabsTrigger>
+              <TabsTrigger value="withdrawals">Rút tiền</TabsTrigger>
+              <TabsTrigger value="orders">Lịch sử giao dịch</TabsTrigger>
             </TabsList>
 
             <TabsContent value="customers">
               <Card>
                 <CardHeader>
-                  <CardTitle>Customer Management</CardTitle>
-                  <CardDescription>Manage customer accounts and balances</CardDescription>
+                  <CardTitle>Quản lý khách hàng</CardTitle>
+                  <CardDescription>Danh sách tất cả khách hàng và trạng thái tài khoản</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Name</TableHead>
+                        <TableHead>Tên</TableHead>
                         <TableHead>Email</TableHead>
-                        <TableHead>Balance</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Join Date</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead>Số điện thoại</TableHead>
+                        <TableHead>Số dư</TableHead>
+                        <TableHead>Trạng thái</TableHead>
+                        <TableHead>Ngày tham gia</TableHead>
+                        <TableHead>Hành động</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -178,17 +317,23 @@ export function AdminDashboard() {
                         <TableRow key={customer.id}>
                           <TableCell className="font-medium">{customer.name}</TableCell>
                           <TableCell>{customer.email}</TableCell>
-                          <TableCell>${customer.balance.toFixed(2)}</TableCell>
+                          <TableCell>{customer.phone}</TableCell>
+                          <TableCell>{formatCurrency(customer.balance)}</TableCell>
+                          <TableCell>{getStatusBadge(customer.status)}</TableCell>
+                          <TableCell>{formatDate(customer.joinDate)}</TableCell>
                           <TableCell>
-                            <Badge variant={customer.status === "active" ? "default" : "destructive"}>
-                              {customer.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{customer.joinDate}</TableCell>
-                          <TableCell>
-                            <Button variant="outline" size="sm">
-                              Edit
-                            </Button>
+                            <Select
+                              value={customer.status}
+                              onValueChange={(value) => updateCustomerStatus(customer.id, value)}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="active">Hoạt động</SelectItem>
+                                <SelectItem value="suspended">Tạm khóa</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -201,41 +346,43 @@ export function AdminDashboard() {
             <TabsContent value="deposits">
               <Card>
                 <CardHeader>
-                  <CardTitle>Deposit Requests</CardTitle>
-                  <CardDescription>Review and approve deposit requests</CardDescription>
+                  <CardTitle>Yêu cầu nạp tiền</CardTitle>
+                  <CardDescription>Quản lý và duyệt các yêu cầu nạp tiền từ khách hàng</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Method</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead>Khách hàng</TableHead>
+                        <TableHead>Số tiền</TableHead>
+                        <TableHead>Phương thức</TableHead>
+                        <TableHead>Trạng thái</TableHead>
+                        <TableHead>Thời gian</TableHead>
+                        <TableHead>Thông tin ngân hàng</TableHead>
+                        <TableHead>Hành động</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {deposits.map((deposit) => (
                         <TableRow key={deposit.id}>
-                          <TableCell className="font-medium">{deposit.customerName}</TableCell>
-                          <TableCell>${deposit.amount.toFixed(2)}</TableCell>
+                          <TableCell className="font-medium">{deposit.userName}</TableCell>
+                          <TableCell>{formatCurrency(deposit.amount)}</TableCell>
                           <TableCell>{deposit.method}</TableCell>
-                          <TableCell>
-                            <Badge variant={deposit.status === "completed" ? "default" : "secondary"}>
-                              {deposit.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{new Date(deposit.date).toLocaleDateString()}</TableCell>
+                          <TableCell>{getStatusBadge(deposit.status)}</TableCell>
+                          <TableCell>{formatDate(deposit.createdAt)}</TableCell>
+                          <TableCell>{deposit.bankInfo}</TableCell>
                           <TableCell>
                             {deposit.status === "pending" && (
-                              <div className="space-x-2">
-                                <Button variant="outline" size="sm">
-                                  Approve
+                              <div className="flex gap-2">
+                                <Button size="sm" onClick={() => updateDepositStatus(deposit.id, "approved")}>
+                                  Duyệt
                                 </Button>
-                                <Button variant="destructive" size="sm">
-                                  Reject
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => updateDepositStatus(deposit.id, "rejected", "Thông tin không hợp lệ")}
+                                >
+                                  Từ chối
                                 </Button>
                               </div>
                             )}
@@ -251,41 +398,43 @@ export function AdminDashboard() {
             <TabsContent value="withdrawals">
               <Card>
                 <CardHeader>
-                  <CardTitle>Withdrawal Requests</CardTitle>
-                  <CardDescription>Review and process withdrawal requests</CardDescription>
+                  <CardTitle>Yêu cầu rút tiền</CardTitle>
+                  <CardDescription>Quản lý và duyệt các yêu cầu rút tiền từ khách hàng</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Method</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead>Khách hàng</TableHead>
+                        <TableHead>Số tiền</TableHead>
+                        <TableHead>Phương thức</TableHead>
+                        <TableHead>Trạng thái</TableHead>
+                        <TableHead>Thời gian</TableHead>
+                        <TableHead>Thông tin ngân hàng</TableHead>
+                        <TableHead>Hành động</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {withdrawals.map((withdrawal) => (
                         <TableRow key={withdrawal.id}>
-                          <TableCell className="font-medium">{withdrawal.customerName}</TableCell>
-                          <TableCell>${withdrawal.amount.toFixed(2)}</TableCell>
+                          <TableCell className="font-medium">{withdrawal.userName}</TableCell>
+                          <TableCell>{formatCurrency(withdrawal.amount)}</TableCell>
                           <TableCell>{withdrawal.method}</TableCell>
-                          <TableCell>
-                            <Badge variant={withdrawal.status === "completed" ? "default" : "secondary"}>
-                              {withdrawal.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{new Date(withdrawal.date).toLocaleDateString()}</TableCell>
+                          <TableCell>{getStatusBadge(withdrawal.status)}</TableCell>
+                          <TableCell>{formatDate(withdrawal.createdAt)}</TableCell>
+                          <TableCell>{withdrawal.bankInfo}</TableCell>
                           <TableCell>
                             {withdrawal.status === "pending" && (
-                              <div className="space-x-2">
-                                <Button variant="outline" size="sm">
-                                  Approve
+                              <div className="flex gap-2">
+                                <Button size="sm" onClick={() => updateWithdrawalStatus(withdrawal.id, "approved")}>
+                                  Duyệt
                                 </Button>
-                                <Button variant="destructive" size="sm">
-                                  Reject
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => updateWithdrawalStatus(withdrawal.id, "rejected", "Số dư không đủ")}
+                                >
+                                  Từ chối
                                 </Button>
                               </div>
                             )}
@@ -301,44 +450,42 @@ export function AdminDashboard() {
             <TabsContent value="orders">
               <Card>
                 <CardHeader>
-                  <CardTitle>Trading Orders</CardTitle>
-                  <CardDescription>View all trading activity</CardDescription>
+                  <CardTitle>Lịch sử giao dịch</CardTitle>
+                  <CardDescription>Theo dõi tất cả các giao dịch binary options của khách hàng</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Asset</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Result</TableHead>
-                        <TableHead>Payout</TableHead>
-                        <TableHead>Date</TableHead>
+                        <TableHead>Khách hàng</TableHead>
+                        <TableHead>Tài sản</TableHead>
+                        <TableHead>Loại</TableHead>
+                        <TableHead>Số tiền</TableHead>
+                        <TableHead>Giá mở</TableHead>
+                        <TableHead>Giá đóng</TableHead>
+                        <TableHead>Kết quả</TableHead>
+                        <TableHead>Lợi nhuận</TableHead>
+                        <TableHead>Thời gian</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {orders.map((order) => (
                         <TableRow key={order.id}>
-                          <TableCell className="font-medium">{order.customerName}</TableCell>
+                          <TableCell className="font-medium">{order.userName}</TableCell>
                           <TableCell>{order.asset}</TableCell>
                           <TableCell>
-                            <Badge variant={order.type === "call" ? "default" : "secondary"}>{order.type}</Badge>
-                          </TableCell>
-                          <TableCell>${order.amount.toFixed(2)}</TableCell>
-                          <TableCell>
-                            <Badge variant={order.status === "completed" ? "default" : "secondary"}>
-                              {order.status}
+                            <Badge variant={order.type === "call" ? "default" : "secondary"}>
+                              {order.type.toUpperCase()}
                             </Badge>
                           </TableCell>
-                          <TableCell>
-                            {order.result && (
-                              <Badge variant={order.result === "win" ? "default" : "destructive"}>{order.result}</Badge>
-                            )}
+                          <TableCell>{formatCurrency(order.amount)}</TableCell>
+                          <TableCell>{order.openPrice}</TableCell>
+                          <TableCell>{order.closePrice}</TableCell>
+                          <TableCell>{getStatusBadge(order.result)}</TableCell>
+                          <TableCell className={order.profit > 0 ? "text-green-600" : "text-red-600"}>
+                            {formatCurrency(order.profit)}
                           </TableCell>
-                          <TableCell>{order.payout ? `$${order.payout.toFixed(2)}` : "-"}</TableCell>
-                          <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
+                          <TableCell>{formatDate(order.openTime)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

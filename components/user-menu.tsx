@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { User, LogOut } from "lucide-react"
+import { User, LogOut, Settings } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface UserMenuProps {
@@ -29,16 +29,21 @@ export function UserMenu({ user }: UserMenuProps) {
   const handleLogout = async () => {
     setIsLoading(true)
     try {
-      await fetch("/api/auth/logout", { method: "POST" })
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out.",
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
       })
-      router.push("/login")
+
+      if (response.ok) {
+        toast({
+          title: "Đăng xuất thành công",
+          description: "Hẹn gặp lại bạn!",
+        })
+        router.push("/login")
+      }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to logout. Please try again.",
+        title: "Lỗi",
+        description: "Không thể đăng xuất",
         variant: "destructive",
       })
     } finally {
@@ -49,7 +54,7 @@ export function UserMenu({ user }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full">
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <User className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -57,13 +62,20 @@ export function UserMenu({ user }: UserMenuProps) {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{user.username}</p>
-            <p className="text-xs leading-none text-muted-foreground">{user.role}</p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {user.role === "admin" ? "Quản trị viên" : "Người dùng"}
+            </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Cài đặt</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} disabled={isLoading}>
           <LogOut className="mr-2 h-4 w-4" />
-          <span>{isLoading ? "Logging out..." : "Log out"}</span>
+          <span>{isLoading ? "Đang đăng xuất..." : "Đăng xuất"}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
