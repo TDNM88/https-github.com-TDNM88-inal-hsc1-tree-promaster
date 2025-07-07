@@ -1,16 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { verifyCredentials, generateToken } from "@/lib/auth"
+import { authenticate, generateToken } from "@/lib/auth"
+
+export const runtime = "nodejs"
 
 export async function POST(request: NextRequest) {
   try {
     const { username, password } = await request.json()
 
-    if (!username || !password) {
-      return NextResponse.json({ message: "Username and password are required" }, { status: 400 })
-    }
-
-    const user = await verifyCredentials(username, password)
-
+    const user = await authenticate(username, password)
     if (!user) {
       return NextResponse.json({ message: "Invalid credentials" }, { status: 401 })
     }
@@ -19,16 +16,14 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({
       message: "Login successful",
-      user,
-      token,
+      user: { id: user.id, username: user.username, role: user.role },
     })
 
-    // Set HTTP-only cookie
     response.cookies.set("auth-token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 86400, // 24 hours
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24, // 24 hours
     })
 
     return response

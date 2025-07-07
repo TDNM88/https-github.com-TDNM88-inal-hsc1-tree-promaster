@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,43 +14,26 @@ import {
 import { User, LogOut } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
-interface UserData {
-  id: string
-  username: string
-  role: string
+interface UserMenuProps {
+  user: {
+    username: string
+    role: string
+  }
 }
 
-export function UserMenu() {
-  const [user, setUser] = useState<UserData | null>(null)
+export function UserMenu({ user }: UserMenuProps) {
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
-  useEffect(() => {
-    fetchUser()
-  }, [])
-
-  const fetchUser = async () => {
-    try {
-      const response = await fetch("/api/auth/me")
-      if (response.ok) {
-        const userData = await response.json()
-        setUser(userData)
-      }
-    } catch (error) {
-      console.error("Failed to fetch user:", error)
-    }
-  }
-
   const handleLogout = async () => {
+    setIsLoading(true)
     try {
       await fetch("/api/auth/logout", { method: "POST" })
-      document.cookie = "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
-
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
       })
-
       router.push("/login")
     } catch (error) {
       toast({
@@ -58,32 +41,29 @@ export function UserMenu() {
         description: "Failed to logout. Please try again.",
         variant: "destructive",
       })
+    } finally {
+      setIsLoading(false)
     }
-  }
-
-  if (!user) {
-    return (
-      <Button variant="outline" onClick={() => router.push("/login")}>
-        Login
-      </Button>
-    )
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full">
           <User className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>
-          {user.username} ({user.role})
+      <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">{user.username}</p>
+            <p className="text-xs leading-none text-muted-foreground">{user.role}</p>
+          </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>
+        <DropdownMenuItem onClick={handleLogout} disabled={isLoading}>
           <LogOut className="mr-2 h-4 w-4" />
-          Logout
+          <span>{isLoading ? "Logging out..." : "Log out"}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

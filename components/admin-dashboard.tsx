@@ -1,13 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { UserMenu } from "@/components/user-menu"
 import { useToast } from "@/hooks/use-toast"
-import { UserMenu } from "./user-menu"
 
 interface Customer {
   id: string
@@ -45,10 +45,10 @@ interface Order {
   asset: string
   type: string
   amount: number
-  payout: number
   status: string
-  openTime: string
-  closeTime: string
+  result?: string
+  payout?: number
+  date: string
 }
 
 export function AdminDashboard() {
@@ -58,6 +58,8 @@ export function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
+
+  const user = { username: "admin", role: "admin" }
 
   useEffect(() => {
     fetchData()
@@ -87,61 +89,11 @@ export function AdminDashboard() {
     }
   }
 
-  const updateDepositStatus = async (id: string, status: string) => {
-    try {
-      const response = await fetch(`/api/deposits/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      })
-
-      if (response.ok) {
-        setDeposits((prev) => prev.map((deposit) => (deposit.id === id ? { ...deposit, status } : deposit)))
-        toast({
-          title: "Success",
-          description: "Deposit status updated",
-        })
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update deposit status",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const updateWithdrawalStatus = async (id: string, status: string) => {
-    try {
-      const response = await fetch(`/api/withdrawals/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      })
-
-      if (response.ok) {
-        setWithdrawals((prev) =>
-          prev.map((withdrawal) => (withdrawal.id === id ? { ...withdrawal, status } : withdrawal)),
-        )
-        toast({
-          title: "Success",
-          description: "Withdrawal status updated",
-        })
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update withdrawal status",
-        variant: "destructive",
-      })
-    }
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Loading...</h2>
+          <h2 className="text-xl font-semibold">Loading...</h2>
         </div>
       </div>
     )
@@ -153,7 +105,7 @@ export function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-            <UserMenu />
+            <UserMenu user={user} />
           </div>
         </div>
       </header>
@@ -200,14 +152,14 @@ export function AdminDashboard() {
               <TabsTrigger value="customers">Customers</TabsTrigger>
               <TabsTrigger value="deposits">Deposits</TabsTrigger>
               <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
-              <TabsTrigger value="orders">Order History</TabsTrigger>
+              <TabsTrigger value="orders">Orders</TabsTrigger>
             </TabsList>
 
             <TabsContent value="customers">
               <Card>
                 <CardHeader>
                   <CardTitle>Customer Management</CardTitle>
-                  <CardDescription>Manage customer accounts and view their information</CardDescription>
+                  <CardDescription>Manage customer accounts and balances</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -218,6 +170,7 @@ export function AdminDashboard() {
                         <TableHead>Balance</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Join Date</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -231,7 +184,12 @@ export function AdminDashboard() {
                               {customer.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>{new Date(customer.joinDate).toLocaleDateString()}</TableCell>
+                          <TableCell>{customer.joinDate}</TableCell>
+                          <TableCell>
+                            <Button variant="outline" size="sm">
+                              Edit
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -244,7 +202,7 @@ export function AdminDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle>Deposit Requests</CardTitle>
-                  <CardDescription>Review and approve customer deposit requests</CardDescription>
+                  <CardDescription>Review and approve deposit requests</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -265,30 +223,18 @@ export function AdminDashboard() {
                           <TableCell>${deposit.amount.toFixed(2)}</TableCell>
                           <TableCell>{deposit.method}</TableCell>
                           <TableCell>
-                            <Badge
-                              variant={
-                                deposit.status === "completed"
-                                  ? "default"
-                                  : deposit.status === "pending"
-                                    ? "secondary"
-                                    : "destructive"
-                              }
-                            >
+                            <Badge variant={deposit.status === "completed" ? "default" : "secondary"}>
                               {deposit.status}
                             </Badge>
                           </TableCell>
                           <TableCell>{new Date(deposit.date).toLocaleDateString()}</TableCell>
                           <TableCell>
                             {deposit.status === "pending" && (
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={() => updateDepositStatus(deposit.id, "completed")}>
+                              <div className="space-x-2">
+                                <Button variant="outline" size="sm">
                                   Approve
                                 </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => updateDepositStatus(deposit.id, "rejected")}
-                                >
+                                <Button variant="destructive" size="sm">
                                   Reject
                                 </Button>
                               </div>
@@ -306,7 +252,7 @@ export function AdminDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle>Withdrawal Requests</CardTitle>
-                  <CardDescription>Review and process customer withdrawal requests</CardDescription>
+                  <CardDescription>Review and process withdrawal requests</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -327,30 +273,18 @@ export function AdminDashboard() {
                           <TableCell>${withdrawal.amount.toFixed(2)}</TableCell>
                           <TableCell>{withdrawal.method}</TableCell>
                           <TableCell>
-                            <Badge
-                              variant={
-                                withdrawal.status === "completed"
-                                  ? "default"
-                                  : withdrawal.status === "pending"
-                                    ? "secondary"
-                                    : "destructive"
-                              }
-                            >
+                            <Badge variant={withdrawal.status === "completed" ? "default" : "secondary"}>
                               {withdrawal.status}
                             </Badge>
                           </TableCell>
                           <TableCell>{new Date(withdrawal.date).toLocaleDateString()}</TableCell>
                           <TableCell>
                             {withdrawal.status === "pending" && (
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={() => updateWithdrawalStatus(withdrawal.id, "completed")}>
+                              <div className="space-x-2">
+                                <Button variant="outline" size="sm">
                                   Approve
                                 </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => updateWithdrawalStatus(withdrawal.id, "rejected")}
-                                >
+                                <Button variant="destructive" size="sm">
                                   Reject
                                 </Button>
                               </div>
@@ -368,7 +302,7 @@ export function AdminDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle>Trading Orders</CardTitle>
-                  <CardDescription>View all customer trading orders and their outcomes</CardDescription>
+                  <CardDescription>View all trading activity</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -378,9 +312,10 @@ export function AdminDashboard() {
                         <TableHead>Asset</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Amount</TableHead>
-                        <TableHead>Payout</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Open Time</TableHead>
+                        <TableHead>Result</TableHead>
+                        <TableHead>Payout</TableHead>
+                        <TableHead>Date</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -389,18 +324,21 @@ export function AdminDashboard() {
                           <TableCell className="font-medium">{order.customerName}</TableCell>
                           <TableCell>{order.asset}</TableCell>
                           <TableCell>
-                            <Badge variant={order.type === "call" ? "default" : "secondary"}>
-                              {order.type.toUpperCase()}
-                            </Badge>
+                            <Badge variant={order.type === "call" ? "default" : "secondary"}>{order.type}</Badge>
                           </TableCell>
                           <TableCell>${order.amount.toFixed(2)}</TableCell>
-                          <TableCell>${order.payout.toFixed(2)}</TableCell>
                           <TableCell>
-                            <Badge variant={order.status === "won" ? "default" : "destructive"}>
-                              {order.status.toUpperCase()}
+                            <Badge variant={order.status === "completed" ? "default" : "secondary"}>
+                              {order.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>{new Date(order.openTime).toLocaleString()}</TableCell>
+                          <TableCell>
+                            {order.result && (
+                              <Badge variant={order.result === "win" ? "default" : "destructive"}>{order.result}</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>{order.payout ? `$${order.payout.toFixed(2)}` : "-"}</TableCell>
+                          <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

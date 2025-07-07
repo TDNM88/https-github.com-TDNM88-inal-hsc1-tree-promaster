@@ -1,5 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getUserFromRequest } from "@/lib/auth"
+import { getWithdrawals } from "@/lib/database"
+
+export const runtime = "nodejs"
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,28 +12,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 })
     }
 
-    // Mock withdrawal data
-    const withdrawals = [
-      {
-        id: "1",
-        customerId: "1",
-        customerName: "John Doe",
-        amount: 200.0,
-        status: "pending",
-        method: "bank_transfer",
-        date: "2024-01-23T11:20:00Z",
-      },
-      {
-        id: "2",
-        customerId: "2",
-        customerName: "Jane Smith",
-        amount: 500.0,
-        status: "completed",
-        method: "crypto",
-        date: "2024-01-24T16:30:00Z",
-      },
-    ]
-
+    const withdrawals = await getWithdrawals()
     return NextResponse.json(withdrawals)
   } catch (error) {
     console.error("Withdrawals API error:", error)

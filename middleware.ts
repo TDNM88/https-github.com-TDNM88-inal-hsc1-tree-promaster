@@ -19,6 +19,15 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
+  // Redirect root to appropriate dashboard
+  if (pathname === "/") {
+    if (user.role === "admin") {
+      return NextResponse.redirect(new URL("/admin", request.url))
+    } else {
+      return NextResponse.redirect(new URL("/trade", request.url))
+    }
+  }
+
   // Admin routes
   if (pathname.startsWith("/admin") && user.role !== "admin") {
     return NextResponse.redirect(new URL("/trade", request.url))

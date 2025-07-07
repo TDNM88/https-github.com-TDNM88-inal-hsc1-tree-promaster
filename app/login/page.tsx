@@ -24,18 +24,13 @@ export default function LoginPage() {
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       })
 
+      const data = await response.json()
+
       if (response.ok) {
-        const data = await response.json()
-
-        // Set cookie
-        document.cookie = `auth-token=${data.token}; path=/; max-age=86400`
-
         toast({
           title: "Login successful",
           description: "Welcome back!",
@@ -48,10 +43,9 @@ export default function LoginPage() {
           router.push("/trade")
         }
       } else {
-        const error = await response.json()
         toast({
           title: "Login failed",
-          description: error.message || "Invalid credentials",
+          description: data.message || "Invalid credentials",
           variant: "destructive",
         })
       }
