@@ -24,7 +24,7 @@
     "@radix-ui/react-tooltip": "^1.0.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "date-fns": "^3.0.0",
+    "date-fns": "latest",
     "gcp-metadata": "latest",
     "jsonwebtoken": "latest",
     "kerberos": "latest",
