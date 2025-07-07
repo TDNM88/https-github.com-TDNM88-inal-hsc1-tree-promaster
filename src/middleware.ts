@@ -6,6 +6,7 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get("auth-token")?.value
 
   // Public paths that don't require authentication
+<<<<<<< HEAD
   const publicPaths = ["/login", "/register"]
   const isPublicPath = publicPaths.includes(pathname)
 
@@ -27,6 +28,21 @@ export function middleware(request: NextRequest) {
     // We can't easily decode the token here, so redirect to home
     // The home page will handle the proper redirect based on role
     return NextResponse.redirect(new URL("/", request.url))
+=======
+  const publicPaths = ["/login", "/register", "/api/login", "/api/register"]
+
+  // Check if the path is public
+  if (publicPaths.some((path) => pathname.startsWith(path))) {
+    return NextResponse.next()
+  }
+
+  // Check for authentication token
+  const token = request.cookies.get("auth_token")?.value || request.headers.get("authorization")?.replace("Bearer ", "")
+
+  // Redirect to login if no token and trying to access protected routes
+  if (!token && (pathname.startsWith("/admin") || pathname.startsWith("/trade") || pathname.startsWith("/account"))) {
+    return NextResponse.redirect(new URL("/login", request.url))
+>>>>>>> 45475aa807b74683eec393af01d071e54b7296cd
   }
 
   // For root path, redirect to login if no token

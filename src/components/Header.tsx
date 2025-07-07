@@ -65,12 +65,10 @@ export default function Header() {
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
           <Link href="/" className="text-xl font-bold text-blue-600">
             Trading Platform
           </Link>
 
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
             {navigationItems.map((item) => {
               const Icon = item.icon
@@ -87,15 +85,12 @@ export default function Header() {
             })}
           </nav>
 
-          {/* User Menu */}
           <div className="flex items-center space-x-4">
-            {/* Balance Display */}
             <div className="hidden sm:block text-sm">
               <span className="text-gray-600">Số dư: </span>
               <span className="font-semibold text-green-600">{formatBalance(user?.balance?.available || 0)}</span>
             </div>
 
-            {/* User Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -140,18 +135,15 @@ export default function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Mobile Menu Button */}
             <Button variant="ghost" className="md:hidden" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
               {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
         {isMobileMenuOpen && (
           <div className="md:hidden border-t bg-white">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              {/* Balance for mobile */}
               <div className="px-3 py-2 text-sm">
                 <span className="text-gray-600">Số dư: </span>
                 <span className="font-semibold text-green-600">{formatBalance(user?.balance?.available || 0)}</span>

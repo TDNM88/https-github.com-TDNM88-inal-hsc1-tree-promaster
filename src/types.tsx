@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // User types
 export interface User {
   _id: string
@@ -14,12 +15,99 @@ export interface User {
 }
 
 // Bank information
+=======
+export interface User {
+  id: string
+  username: string
+  email: string
+  fullName?: string
+  phone?: string
+  role: "admin" | "user"
+  balance: {
+    available: number
+    frozen: number
+  }
+  status: {
+    active: boolean
+    betLocked: boolean
+    withdrawLocked: boolean
+  }
+  verification: {
+    status: "verified" | "pending" | "rejected"
+    documents?: {
+      frontId?: string
+      backId?: string
+    }
+  }
+  createdAt: string
+  lastLogin?: string
+}
+
+export interface Deposit {
+  id: string
+  userId: string
+  amount: number
+  status: "pending" | "approved" | "rejected"
+  bankInfo: {
+    bankName: string
+    accountNumber: string
+    accountName: string
+  }
+  createdAt: string
+  approvedAt?: string
+  rejectedAt?: string
+  notes?: string
+}
+
+export interface Withdrawal {
+  id: string
+  userId: string
+  amount: number
+  status: "pending" | "processing" | "completed" | "rejected"
+  bank: {
+    bankName: string
+    accountNumber: string
+    accountName: string
+  }
+  createdAt: string
+  processedAt?: string
+  completedAt?: string
+  rejectedAt?: string
+  notes?: string
+}
+
+export interface TradingSession {
+  id: string
+  name: string
+  startTime: string
+  endTime: string
+  status: "active" | "closed" | "pending"
+  result?: "up" | "down"
+  openPrice?: number
+  closePrice?: number
+}
+
+export interface Order {
+  id: string
+  userId: string
+  sessionId: string
+  type: "up" | "down"
+  amount: number
+  status: "pending" | "won" | "lost"
+  result?: "win" | "lose"
+  payout?: number
+  createdAt: string
+  settledAt?: string
+}
+
+>>>>>>> 45475aa807b74683eec393af01d071e54b7296cd
 export interface BankInfo {
   bankName: string
   accountNumber: string
   accountName: string
 }
 
+<<<<<<< HEAD
 // Trading session
 export interface Session {
   _id: string
@@ -84,6 +172,20 @@ export interface Order {
 // System settings
 export interface Settings {
   _id: string
+=======
+export interface AuthResponse {
+  token: string
+  user: User
+}
+
+export interface ErrorResponse {
+  message: string
+  error?: string
+}
+
+export interface Settings {
+  id: string
+>>>>>>> 45475aa807b74683eec393af01d071e54b7296cd
   bankDetails: BankInfo[]
   depositLimits: {
     min: number
@@ -102,6 +204,7 @@ export interface Settings {
   payoutRate: number
   updatedAt: string
 }
+<<<<<<< HEAD
 
 // Authentication
 export interface AuthResponse {
@@ -114,3 +217,5 @@ export interface ErrorResponse {
   message: string
   error?: string
 }
+=======
+>>>>>>> 45475aa807b74683eec393af01d071e54b7296cd

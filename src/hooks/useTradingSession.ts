@@ -24,6 +24,7 @@ export const useTradingSession = () => {
       if (!response.ok) {
         throw new Error("Failed to fetch session")
       }
+<<<<<<< HEAD
 
       const data = await response.json()
 
@@ -50,16 +51,49 @@ export const useTradingSession = () => {
       setIsLoading(false)
     }
   }
+=======
+>>>>>>> 45475aa807b74683eec393af01d071e54b7296cd
 
-  // Lấy thông tin phiên ban đầu
+      const data = await response.json()
+
+      if (data.currentSession) {
+        setCurrentSession(data.currentSession)
+
+        const now = new Date()
+        const endTime = new Date(data.currentSession.endTime)
+        const timeDiff = Math.max(0, Math.floor((endTime.getTime() - now.getTime()) / 1000))
+        setTimeLeft(timeDiff)
+      }
+
+      if (data.nextSessions) {
+        setNextSessions(data.nextSessions)
+      }
+
+      setLastUpdate(new Date())
+      setError(null)
+    } catch (err) {
+      setError("Không thể tải thông tin phiên giao dịch")
+      console.error("Error fetching session:", err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   useEffect(() => {
     fetchSession()
 
+<<<<<<< HEAD
     // Cập nhật thông tin mỗi giây
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           fetchSession() // Làm mới thông tin khi hết giờ
+=======
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          fetchSession()
+>>>>>>> 45475aa807b74683eec393af01d071e54b7296cd
           return 0
         }
         return prev - 1
