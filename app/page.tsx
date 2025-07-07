@@ -1,13 +1,21 @@
-import { AdminDashboard } from "@/components/admin-dashboard"
-import { isAuthenticated } from "@/lib/auth"
+import { getUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import { AdminDashboard } from "@/components/admin-dashboard"
 
-export default async function Page() {
-  const authenticated = await isAuthenticated()
+export default async function HomePage() {
+  const user = await getUser()
 
-  if (!authenticated) {
+  if (!user) {
     redirect("/login")
   }
 
-  return <AdminDashboard />
+  if (user.role === "user") {
+    redirect("/trade")
+  }
+
+  if (user.role === "admin") {
+    return <AdminDashboard />
+  }
+
+  redirect("/login")
 }

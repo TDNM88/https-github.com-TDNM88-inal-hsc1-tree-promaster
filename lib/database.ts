@@ -56,13 +56,37 @@ export interface TradingOrder {
   createdAt: Date
 }
 
-export class Database {
-  static async getCustomers() {
-    const client = await clientPromise
-    const db = client.db("trading")
-    return await db.collection<Customer>("customers").find({}).toArray()
-  }
+export async function connectToDatabase() {
+  const client = await clientPromise
+  const db = client.db("binary-trading")
+  return { client, db }
+}
 
+export async function getCustomers() {
+  const { db } = await connectToDatabase()
+  const customers = await db.collection("customers").find({}).toArray()
+  return customers
+}
+
+export async function getDeposits() {
+  const { db } = await connectToDatabase()
+  const deposits = await db.collection("deposits").find({}).toArray()
+  return deposits
+}
+
+export async function getWithdrawals() {
+  const { db } = await connectToDatabase()
+  const withdrawals = await db.collection("withdrawals").find({}).toArray()
+  return withdrawals
+}
+
+export async function getOrders() {
+  const { db } = await connectToDatabase()
+  const orders = await db.collection("orders").find({}).toArray()
+  return orders
+}
+
+export class Database {
   static async createCustomer(customer: Omit<Customer, "_id" | "createdAt" | "updatedAt">) {
     const client = await clientPromise
     const db = client.db("trading")
