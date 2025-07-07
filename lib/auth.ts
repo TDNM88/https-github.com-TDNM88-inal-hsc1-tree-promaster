@@ -1,64 +1,61 @@
-import { cookies } from "next/headers"
-import { redirect } from "next/navigation"
+import bcrypt from "bcryptjs"
+import jwt from "jsonwebtoken"
+import type { NextRequest } from "next/server"
 
-// Simple in-memory user store (replace with database in production)
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"
+
+export interface User {
+  id: string
+  username: string
+  role: "admin" | "user"
+}
+
+// Mock users for demo
 const users = [
-  { username: "admin", password: "admin123", role: "admin" },
-  { username: "user", password: "user123", role: "user" },
+  {
+    id: "1",
+    username: "admin",
+    password: "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", // password
+    role: "admin" as const,
+  },
+  {
+    id: "2",
+    username: "user",
+    password: "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", // password
+    role: "user" as const,
+  },
 ]
 
-export async function login(username: string, password: string) {
-  const user = users.find((u) => u.username === username && u.password === password)
+export async function verifyCredentials(username: string, password: string): Promise<User | null> {
+  const user = users.find((u) => u.username === username)
+  if (!user) return null
 
-  if (user) {
-    const cookieStore = cookies()
-    cookieStore.set("auth-token", JSON.stringify({ username: user.username, role: user.role }), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    })
+  const isValid = await bcrypt.compare(password, user.password)
+  if (!isValid) return null
 
-    return { success: true, user: { username: user.username, role: user.role } }
+  return {
+    id: user.id,
+    username: user.username,
+    role: user.role,
   }
-
-  return { success: false, error: "Tên đăng nhập hoặc mật khẩu không đúng" }
 }
 
-export async function logout() {
-  const cookieStore = cookies()
-  cookieStore.delete("auth-token")
-  redirect("/login")
+export function generateToken(user: User): string {
+  return jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: "24h" })
 }
 
-export async function getUser() {
-  const cookieStore = cookies()
-  const token = cookieStore.get("auth-token")
-
-  if (!token) {
-    return null
-  }
-
+export function verifyToken(token: string): User | null {
   try {
-    return JSON.parse(token.value)
+    const decoded = jwt.verify(token, JWT_SECRET) as User
+    return decoded
   } catch {
     return null
   }
 }
 
-export async function changePassword(currentPassword: string, newPassword: string) {
-  const user = await getUser()
-  if (!user) {
-    return { success: false, error: "Không tìm thấy người dùng" }
-  }
+export function getUserFromRequest(request: NextRequest): User | null {
+  const token = request.cookies.get("auth-token")?.value
+  if (!token) return null
 
-  const userRecord = users.find((u) => u.username === user.username)
-  if (!userRecord || userRecord.password !== currentPassword) {
-    return { success: false, error: "Mật khẩu hiện tại không đúng" }
-  }
-
-  // Update password (in production, hash the password)
-  userRecord.password = newPassword
-
-  return { success: true }
+  return verifyToken(token)
 }

@@ -2,24 +2,17 @@
 
 import * as React from "react"
 
-type ToastProps = {
-  title?: string
-  description?: string
-  variant?: "default" | "destructive"
-}
+import type { ToastActionElement, ToastProps } from "@/components/ui/toast"
 
-type ToastActionElement = React.ReactElement
+const TOAST_LIMIT = 1
+const TOAST_REMOVE_DELAY = 1000000
 
-type ToasterToast = {
+type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
-  open: boolean
 }
-
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -94,6 +87,8 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
+      // ! Side effects ! - This could be extracted into a dismissToast() action,
+      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -139,7 +134,9 @@ function dispatch(action: Action) {
   })
 }
 
-function toast({ ...props }: Omit<ToasterToast, "id">) {
+type Toast = Omit<ToasterToast, "id">
+
+function toast({ ...props }: Toast) {
   const id = genId()
 
   const update = (props: ToasterToast) =>

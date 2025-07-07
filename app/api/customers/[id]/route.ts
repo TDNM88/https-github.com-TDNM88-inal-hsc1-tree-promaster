@@ -1,51 +1,50 @@
-import { NextResponse } from "next/server"
-import { connectToDatabase } from "@/lib/database"
-import { ObjectId } from "mongodb"
+import { type NextRequest, NextResponse } from "next/server"
+import { getUserFromRequest } from "@/lib/auth"
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { db } = await connectToDatabase()
-    const customer = await db.collection("customers").findOne({ _id: new ObjectId(params.id) })
+    const user = getUserFromRequest(request)
 
-    if (!customer) {
-      return NextResponse.json({ error: "Customer not found" }, { status: 404 })
+    if (!user || user.role !== "admin") {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 403 })
+    }
+
+    // Mock customer data
+    const customer = {
+      id: params.id,
+      name: "John Doe",
+      email: "john@example.com",
+      balance: 1500.0,
+      status: "active",
+      joinDate: "2024-01-15",
     }
 
     return NextResponse.json(customer)
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch customer" }, { status: 500 })
+    console.error("Customer API error:", error)
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const body = await request.json()
-    const { db } = await connectToDatabase()
+    const user = getUserFromRequest(request)
 
-    const result = await db.collection("customers").updateOne({ _id: new ObjectId(params.id) }, { $set: body })
-
-    if (result.matchedCount === 0) {
-      return NextResponse.json({ error: "Customer not found" }, { status: 404 })
+    if (!user || user.role !== "admin") {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 403 })
     }
 
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to update customer" }, { status: 500 })
-  }
-}
+    const updates = await request.json()
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  try {
-    const { db } = await connectToDatabase()
-
-    const result = await db.collection("customers").deleteOne({ _id: new ObjectId(params.id) })
-
-    if (result.deletedCount === 0) {
-      return NextResponse.json({ error: "Customer not found" }, { status: 404 })
+    // Mock update
+    const updatedCustomer = {
+      id: params.id,
+      ...updates,
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json(updatedCustomer)
   } catch (error) {
-    return NextResponse.json({ error: "Failed to delete customer" }, { status: 500 })
+    console.error("Customer update error:", error)
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }

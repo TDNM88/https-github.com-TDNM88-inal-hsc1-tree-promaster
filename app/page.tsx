@@ -1,21 +1,43 @@
-import { getUser } from "@/lib/auth"
-import { redirect } from "next/navigation"
-import { AdminDashboard } from "@/components/admin-dashboard"
+"use client"
 
-export default async function HomePage() {
-  const user = await getUser()
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
-  if (!user) {
-    redirect("/login")
-  }
+export default function HomePage() {
+  const router = useRouter()
 
-  if (user.role === "user") {
-    redirect("/trade")
-  }
+  useEffect(() => {
+    // Check if user is logged in
+    const token = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("auth-token="))
+      ?.split("=")[1]
 
-  if (user.role === "admin") {
-    return <AdminDashboard />
-  }
+    if (token) {
+      // Fetch user info to determine redirect
+      fetch("/api/auth/me")
+        .then((res) => res.json())
+        .then((user) => {
+          if (user.role === "admin") {
+            router.push("/admin")
+          } else {
+            router.push("/trade")
+          }
+        })
+        .catch(() => {
+          router.push("/login")
+        })
+    } else {
+      router.push("/login")
+    }
+  }, [router])
 
-  redirect("/login")
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-4">Binary Trading Dashboard</h1>
+        <p>Redirecting...</p>
+      </div>
+    </div>
+  )
 }
