@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 
 export const runtime = "nodejs"
 
-// Mock data for customers
+// Mock data for customers - no authentication required
 const mockCustomers = [
   {
     id: "1",
@@ -37,6 +37,28 @@ const mockCustomers = [
     totalDeposits: 2000000,
     totalWithdrawals: 2000000,
   },
+  {
+    id: "4",
+    name: "Phạm Thị Dung",
+    email: "phamthidung@email.com",
+    phone: "0934567890",
+    balance: 7500000,
+    status: "active",
+    joinDate: "2024-01-25T16:20:00Z",
+    totalDeposits: 15000000,
+    totalWithdrawals: 7500000,
+  },
+  {
+    id: "5",
+    name: "Hoàng Văn Em",
+    email: "hoangvanem@email.com",
+    phone: "0945678901",
+    balance: 2200000,
+    status: "active",
+    joinDate: "2024-03-05T11:45:00Z",
+    totalDeposits: 5000000,
+    totalWithdrawals: 2800000,
+  },
 ]
 
 export async function GET() {
@@ -51,7 +73,8 @@ export async function PUT(request: Request) {
   try {
     const { id, status } = await request.json()
     // In real app, update database
-    return NextResponse.json({ message: "Customer status updated" })
+    console.log(`Updating customer ${id} status to ${status}`)
+    return NextResponse.json({ message: "Customer status updated successfully" })
   } catch (error) {
     return NextResponse.json({ error: "Failed to update customer" }, { status: 500 })
   }

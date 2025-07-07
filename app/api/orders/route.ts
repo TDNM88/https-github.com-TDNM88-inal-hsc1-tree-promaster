@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 
 export const runtime = "nodejs"
 
-// Mock data for trading orders
+// Mock data for trading orders - no authentication required
 const mockOrders = [
   {
     id: "1",
@@ -62,6 +62,51 @@ const mockOrders = [
     profit: 63750,
     openTime: "2024-01-21T13:45:00Z",
     closeTime: "2024-01-21T13:50:00Z",
+    duration: "5m",
+  },
+  {
+    id: "5",
+    userId: "4",
+    userName: "Phạm Thị Dung",
+    asset: "USD/CAD",
+    type: "call",
+    amount: 300000,
+    openPrice: 1.348,
+    closePrice: 1.352,
+    result: "win",
+    profit: 255000,
+    openTime: "2024-01-22T09:20:00Z",
+    closeTime: "2024-01-22T09:25:00Z",
+    duration: "5m",
+  },
+  {
+    id: "6",
+    userId: "5",
+    userName: "Hoàng Văn Em",
+    asset: "EUR/GBP",
+    type: "put",
+    amount: 120000,
+    openPrice: 0.858,
+    closePrice: 0.86,
+    result: "loss",
+    profit: -120000,
+    openTime: "2024-01-22T14:10:00Z",
+    closeTime: "2024-01-22T14:15:00Z",
+    duration: "5m",
+  },
+  {
+    id: "7",
+    userId: "2",
+    userName: "Trần Thị Bình",
+    asset: "USD/CHF",
+    type: "call",
+    amount: 180000,
+    openPrice: 0.875,
+    closePrice: 0.878,
+    result: "win",
+    profit: 153000,
+    openTime: "2024-01-22T15:30:00Z",
+    closeTime: "2024-01-22T15:35:00Z",
     duration: "5m",
   },
 ]

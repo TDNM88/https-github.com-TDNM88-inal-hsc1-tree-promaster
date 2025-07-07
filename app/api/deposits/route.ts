@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 
 export const runtime = "nodejs"
 
-// Mock data for deposits
+// Mock data for deposits - no authentication required
 const mockDeposits = [
   {
     id: "1",
@@ -37,6 +37,27 @@ const mockDeposits = [
     rejectedAt: "2024-01-18T12:00:00Z",
     rejectionReason: "Thông tin không khớp",
   },
+  {
+    id: "4",
+    userId: "4",
+    userName: "Phạm Thị Dung",
+    amount: 3000000,
+    method: "Bank Transfer",
+    status: "pending",
+    createdAt: "2024-01-21T09:15:00Z",
+    bankInfo: "ACB - 5555666677",
+  },
+  {
+    id: "5",
+    userId: "5",
+    userName: "Hoàng Văn Em",
+    amount: 750000,
+    method: "E-wallet",
+    status: "approved",
+    createdAt: "2024-01-17T13:30:00Z",
+    bankInfo: "ZaloPay - 0945678901",
+    approvedAt: "2024-01-17T14:00:00Z",
+  },
 ]
 
 export async function GET() {
@@ -50,8 +71,8 @@ export async function GET() {
 export async function PUT(request: Request) {
   try {
     const { id, status, rejectionReason } = await request.json()
-    // In real app, update database
-    return NextResponse.json({ message: "Deposit status updated" })
+    console.log(`Updating deposit ${id} status to ${status}`, rejectionReason ? `Reason: ${rejectionReason}` : "")
+    return NextResponse.json({ message: "Deposit status updated successfully" })
   } catch (error) {
     return NextResponse.json({ error: "Failed to update deposit" }, { status: 500 })
   }

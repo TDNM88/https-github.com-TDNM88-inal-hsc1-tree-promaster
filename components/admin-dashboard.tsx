@@ -8,8 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { UserMenu } from "@/components/user-menu"
-import { Users, TrendingUp, TrendingDown, Activity } from "lucide-react"
+import { Users, TrendingUp, TrendingDown, Activity, Settings, BarChart3 } from "lucide-react"
 
 interface Customer {
   id: string
@@ -221,7 +220,8 @@ export function AdminDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold">Đang tải...</h2>
+          <h2 className="text-2xl font-bold">Đang tải dữ liệu...</h2>
+          <p className="text-gray-600 mt-2">Vui lòng chờ trong giây lát</p>
         </div>
       </div>
     )
@@ -234,14 +234,23 @@ export function AdminDashboard() {
   const totalWithdrawals = withdrawals.reduce((sum, w) => sum + w.amount, 0)
   const pendingDeposits = deposits.filter((d) => d.status === "pending").length
   const pendingWithdrawals = withdrawals.filter((w) => w.status === "pending").length
+  const totalTrades = orders.length
+  const winningTrades = orders.filter((o) => o.result === "win").length
+  const totalProfit = orders.reduce((sum, o) => sum + o.profit, 0)
 
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-            <UserMenu user={{ username: "admin", role: "admin" }} />
+            <div className="flex items-center space-x-4">
+              <BarChart3 className="h-8 w-8 text-blue-600" />
+              <h1 className="text-2xl font-bold text-gray-900">Binary Trading Admin Dashboard</h1>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Settings className="h-5 w-5 text-gray-500" />
+              <span className="text-sm text-gray-600">Quản trị hệ thống</span>
+            </div>
           </div>
         </div>
       </header>
@@ -285,23 +294,44 @@ export function AdminDashboard() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Tổng giao dịch</CardTitle>
+                <CardTitle className="text-sm font-medium">Giao dịch</CardTitle>
                 <Activity className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{orders.length}</div>
-                <p className="text-xs text-muted-foreground">Hôm nay</p>
+                <div className="text-2xl font-bold">{totalTrades}</div>
+                <p className="text-xs text-muted-foreground">
+                  {winningTrades}/{totalTrades} thắng (
+                  {totalTrades > 0 ? Math.round((winningTrades / totalTrades) * 100) : 0}%)
+                </p>
               </CardContent>
             </Card>
           </div>
 
+          {/* Profit/Loss Summary */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Tổng quan lợi nhuận</CardTitle>
+              <CardDescription>Thống kê tổng lợi nhuận/lỗ từ tất cả giao dịch</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                <span className={totalProfit >= 0 ? "text-green-600" : "text-red-600"}>
+                  {formatCurrency(totalProfit)}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                {totalProfit >= 0 ? "Lợi nhuận tích lũy" : "Lỗ tích lũy"} từ {totalTrades} giao dịch
+              </p>
+            </CardContent>
+          </Card>
+
           {/* Main Content Tabs */}
           <Tabs defaultValue="customers" className="space-y-4">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="customers">Khách hàng</TabsTrigger>
-              <TabsTrigger value="deposits">Nạp tiền</TabsTrigger>
-              <TabsTrigger value="withdrawals">Rút tiền</TabsTrigger>
-              <TabsTrigger value="orders">Lịch sử giao dịch</TabsTrigger>
+              <TabsTrigger value="customers">Khách hàng ({totalCustomers})</TabsTrigger>
+              <TabsTrigger value="deposits">Nạp tiền ({pendingDeposits})</TabsTrigger>
+              <TabsTrigger value="withdrawals">Rút tiền ({pendingWithdrawals})</TabsTrigger>
+              <TabsTrigger value="orders">Giao dịch ({totalTrades})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="customers">
