@@ -823,7 +823,36 @@ function TradingSessionsPage({ token }: any) {
   const [isLoading, setIsLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
 
-  const generateRandomResult = () => Math.random() > 0.5 ? 'Lên' : 'Xuống';
+  const generateRandomResult = () => Math.random() > 0.5 ? 'UP' : 'DOWN';
+  
+  const saveSessionToServer = async (session: any) => {
+    try {
+      const response = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'create',
+          session: session
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save session');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving session:', error);
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể lưu thông tin phiên',
+        variant: 'destructive'
+      });
+    }
+  };
   const generateSessionId = (time: Date) => {
     const year = String(time.getFullYear()).slice(-2);
     const month = String(time.getMonth() + 1).padStart(2, '0');
@@ -877,27 +906,34 @@ function TradingSessionsPage({ token }: any) {
   }, []);
   
   useEffect(() => {
-    const now = new Date();
-    
-    const currentSessionStartTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), 0);
-    const currentSessionEndTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), 59);
-    
-    if (currentSession.sessionId !== generateSessionId(now)) {
-      const newCurrentSession = {
-        sessionId: generateSessionId(now),
-        result: generateRandomResult(),
-        startTime: currentSessionStartTime.toISOString(),
-        endTime: currentSessionEndTime.toISOString(),
-        status: 'active'
-      };
+    const updateSession = async () => {
+      const now = new Date();
       
-      setCurrentSession(newCurrentSession);
-      const newFutureSessions = generateFutureSessions(now);
-      setFutureSessions(newFutureSessions);
-      setSessions([newCurrentSession, ...newFutureSessions.slice(0, sessionsPerPage - 1)]);
-      setTotalPages(Math.ceil((1 + newFutureSessions.length) / sessionsPerPage));
-      setIsLoading(false);
-    }
+      const currentSessionStartTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), 0);
+      const currentSessionEndTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), 59);
+      
+      if (currentSession.sessionId !== generateSessionId(now)) {
+        const newCurrentSession = {
+          sessionId: generateSessionId(now),
+          result: generateRandomResult(),
+          startTime: currentSessionStartTime.toISOString(),
+          endTime: currentSessionEndTime.toISOString(),
+          status: 'active'
+        };
+        
+        // Lưu phiên mới lên server
+        await saveSessionToServer(newCurrentSession);
+        
+        setCurrentSession(newCurrentSession);
+        const newFutureSessions = generateFutureSessions(now);
+        setFutureSessions(newFutureSessions);
+        setSessions([newCurrentSession, ...newFutureSessions.slice(0, sessionsPerPage - 1)]);
+        setTotalPages(Math.ceil((1 + newFutureSessions.length) / sessionsPerPage));
+        setIsLoading(false);
+      }
+    };
+    
+    updateSession().catch(console.error);
   }, [currentTime, currentSession.sessionId]);
   
   useEffect(() => {

@@ -10,7 +10,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import RightColumn from './RightColumn';
-import LiquidityTable from '@/components/LiquidityTable';
+import { useTradingSession } from '@/hooks/useTradingSession';
 
 // Types
 export interface TradeHistoryRecord {
@@ -55,46 +55,60 @@ export default function TradePage() {
   const [balance, setBalance] = useState<number>(1000000); // Initial balance for demo
   const [tradeHistory, setTradeHistory] = useState<TradeHistoryRecord[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string>('');
-  const [timeLeft, setTimeLeft] = useState<number>(SESSION_DURATION);
+  const [localTimeLeft, setLocalTimeLeft] = useState<number>(SESSION_DURATION);
   const [amount, setAmount] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [selectedAction, setSelectedAction] = useState<"UP" | "DOWN" | null>(null);
   const [tradeResult, setTradeResult] = useState<TradeResult>({ status: "idle" });
 
-  // Generate session ID and manage session timing
+  // Sử dụng hook useTradingSession để đồng bộ thông tin phiên
+  const { 
+    currentSession, 
+    nextSessions, 
+    timeLeft: serverTimeLeft, 
+    isLoading: isLoadingSession, 
+    error: sessionError 
+  } = useTradingSession();
+  
+  // Sử dụng timeLeft từ server nếu có, nếu không dùng localTimeLeft
+  const timeLeft = serverTimeLeft !== undefined ? serverTimeLeft : localTimeLeft;
+
+  // Cập nhật currentSessionId từ server
+  useEffect(() => {
+    if (currentSession) {
+      setCurrentSessionId(currentSession.sessionId);
+      
+      // Nếu có kết quả từ server, cập nhật kết quả
+      if (currentSession.result) {
+        // Xử lý kết quả từ server nếu cần
+      }
+    }
+  }, [currentSession]);
+
+  // Xử lý lỗi nếu có
+  useEffect(() => {
+    if (sessionError) {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description: sessionError
+      });
+    }
+  }, [sessionError, toast]);
+
+  // Kiểm tra đăng nhập
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/auth/login');
-      toast({ variant: 'destructive', title: 'Vui lòng đăng nhập để sử dụng tính năng này' });
+      toast({ 
+        variant: 'destructive', 
+        title: 'Vui lòng đăng nhập để sử dụng tính năng này' 
+      });
       return;
     }
-
-    const generateSessionId = () => {
-      const now = new Date();
-      return `SES-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${Math.floor(now.getTime() / (SESSION_DURATION * 1000))}`;
-    };
-
-    const startNewSession = () => {
-      setCurrentSessionId(generateSessionId());
-      setTimeLeft(SESSION_DURATION);
-    };
-
-    startNewSession();
-
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          startNewSession();
-          return SESSION_DURATION;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
+    
     setIsLoading(false);
-
-    return () => clearInterval(timer);
   }, [loading, user, router, toast]);
 
   // Track which trades have been processed to prevent duplicate updates

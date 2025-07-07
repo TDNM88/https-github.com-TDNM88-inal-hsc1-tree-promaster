@@ -27,7 +27,7 @@ const PAIRS = [
   "BUSD/USD",
 ];
 
-// Generates a random VND quantity ~ 400–700 million rounded to 500,000
+// Generates a random VND quantity ~ 10–54 million rounded to 500,000
 const randomQty = () => {
   const min = 10_000_000;
   const max = 54_000_000;
