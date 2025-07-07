@@ -153,24 +153,32 @@ export default function HomePage() {
   const router = useRouter()
 
   useEffect(() => {
-    if (isLoading) return
+    if (isLoading) {
+      // Show loading state while checking auth
+      return
+    }
 
     if (!isAuthenticated()) {
+      // If not authenticated, redirect to login
       router.push("/login")
       return
     }
 
-    // Redirect based on user role
+    // If authenticated, redirect based on role
     if (isAdmin()) {
-      router.push("/admin")
+      router.push("/admin/dashboard")
     } else {
       router.push("/trade")
     }
   }, [isLoading, isAuthenticated, isAdmin, router])
 
+  // Show loading spinner while redirecting
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Loader2 className="h-8 w-8 animate-spin" />
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="flex flex-col items-center space-y-4">
+        <Loader2 className="h-12 w-12 text-primary animate-spin" />
+        <p className="text-muted-foreground">Đang chuyển hướng...</p>
+      </div>
     </div>
   )
 }

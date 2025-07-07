@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/useAuth"
 import { Button } from "@/components/ui/button"
@@ -21,32 +20,50 @@ export default function LoginPage() {
   const router = useRouter()
 
   // Redirect if already authenticated
-  if (isAuthenticated()) {
-    if (isAdmin()) {
-      router.push("/admin")
-    } else {
-      router.push("/trade")
+  useEffect(() => {
+    if (isAuthenticated()) {
+      if (isAdmin()) {
+        router.push("/admin/dashboard")
+      } else {
+        router.push("/trade")
+      }
     }
+  }, [isAuthenticated, isAdmin, router])
+
+  // Show loading state while checking auth
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  // Don't show the login form if already authenticated (will be redirected by useEffect)
+  if (isAuthenticated()) {
     return null
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    
+    // Basic validation
+    if (!username.trim() || !password) {
+      setError("Vui lòng nhập tên đăng nhập và mật khẩu")
+      return
+    }
+
     setIsLoading(true)
 
     try {
       const result = await login(username, password)
 
       if (result.success) {
-        // Redirect will be handled by the auth context
-        if (isAdmin()) {
-          router.push("/admin")
-        } else {
-          router.push("/trade")
-        }
+        // The useEffect will handle the redirect based on auth state
+        return
       } else {
-        setError(result.message || "Đăng nhập thất bại")
+        setError(result.message || "Đăng nhập thất bại. Vui lòng thử lại.")
       }
     } catch (err) {
       setError("Lỗi kết nối. Vui lòng thử lại sau.")
