@@ -18,318 +18,287 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   Users,
   DollarSign,
   TrendingUp,
-  TrendingDown,
-  MoreHorizontal,
+  Activity,
   Search,
-  Plus,
+  Download,
   Edit,
   Eye,
-  UserCheck,
-  UserX,
-  Lock,
-  Unlock,
+  CheckCircle,
+  XCircle,
 } from "lucide-react"
 
 // Mock data with the provided customer information
 const mockUsers = [
   {
-    _id: "1",
+    id: "1",
     username: "amen123",
     fullName: "Amen 123",
-    role: "user",
-    balance: { available: 1250000, frozen: 50000 },
-    loginInfo: "192.168.1.1",
-    verification: { cccdFront: true, cccdBack: true, verified: true },
-    status: { active: true, betLocked: false, withdrawLocked: false },
-    bank: { name: "Vietcombank", accountNumber: "1234567890", accountHolder: "Amen 123" },
-    phone: "0901234567",
     email: "amen123@example.com",
+    phone: "0901234567",
+    balance: { available: 1250000, frozen: 50000 },
+    status: { active: true, betLocked: false, withdrawLocked: false },
+    verification: { status: "verified" },
     createdAt: "2024-01-15T08:30:00Z",
     lastLogin: "2024-01-20T14:22:00Z",
   },
   {
-    _id: "2",
+    id: "2",
     username: "tramanh2025",
     fullName: "Tra Manh 2025",
-    role: "user",
-    balance: { available: 850000, frozen: 25000 },
-    loginInfo: "192.168.1.2",
-    verification: { cccdFront: true, cccdBack: false, verified: false },
-    status: { active: true, betLocked: false, withdrawLocked: false },
-    bank: { name: "Techcombank", accountNumber: "2345678901", accountHolder: "Tra Manh 2025" },
-    phone: "0902345678",
     email: "tramanh2025@example.com",
+    phone: "0902345678",
+    balance: { available: 850000, frozen: 25000 },
+    status: { active: true, betLocked: false, withdrawLocked: false },
+    verification: { status: "pending" },
     createdAt: "2024-01-16T09:15:00Z",
     lastLogin: "2024-01-20T16:45:00Z",
   },
   {
-    _id: "3",
+    id: "3",
     username: "phattai68",
     fullName: "Phat Tai 68",
-    role: "user",
-    balance: { available: 2100000, frozen: 100000 },
-    loginInfo: "192.168.1.3",
-    verification: { cccdFront: true, cccdBack: true, verified: true },
-    status: { active: true, betLocked: false, withdrawLocked: false },
-    bank: { name: "BIDV", accountNumber: "3456789012", accountHolder: "Phat Tai 68" },
-    phone: "0903456789",
     email: "phattai68@example.com",
+    phone: "0903456789",
+    balance: { available: 2100000, frozen: 100000 },
+    status: { active: true, betLocked: false, withdrawLocked: false },
+    verification: { status: "verified" },
     createdAt: "2024-01-17T10:00:00Z",
     lastLogin: "2024-01-20T18:30:00Z",
   },
   {
-    _id: "4",
+    id: "4",
     username: "okbaby",
     fullName: "Ok Baby",
-    role: "user",
-    balance: { available: 450000, frozen: 15000 },
-    loginInfo: "192.168.1.4",
-    verification: { cccdFront: false, cccdBack: false, verified: false },
-    status: { active: true, betLocked: false, withdrawLocked: false },
-    bank: { name: "", accountNumber: "", accountHolder: "" },
-    phone: "0904567890",
     email: "okbaby@example.com",
+    phone: "0904567890",
+    balance: { available: 450000, frozen: 15000 },
+    status: { active: true, betLocked: false, withdrawLocked: false },
+    verification: { status: "pending" },
     createdAt: "2024-01-18T11:30:00Z",
     lastLogin: "2024-01-20T12:15:00Z",
   },
   {
-    _id: "5",
+    id: "5",
     username: "mami123",
     fullName: "Mami 123",
-    role: "user",
-    balance: { available: 750000, frozen: 35000 },
-    loginInfo: "192.168.1.5",
-    verification: { cccdFront: true, cccdBack: true, verified: true },
-    status: { active: true, betLocked: false, withdrawLocked: false },
-    bank: { name: "ACB", accountNumber: "4567890123", accountHolder: "Mami 123" },
-    phone: "0905678901",
     email: "mami123@example.com",
+    phone: "0905678901",
+    balance: { available: 750000, frozen: 35000 },
+    status: { active: true, betLocked: false, withdrawLocked: false },
+    verification: { status: "verified" },
     createdAt: "2024-01-19T13:45:00Z",
     lastLogin: "2024-01-20T20:00:00Z",
   },
   {
-    _id: "6",
+    id: "6",
     username: "choichochan",
     fullName: "Choi Cho Chan",
-    role: "user",
-    balance: { available: 320000, frozen: 8000 },
-    loginInfo: "192.168.1.6",
-    verification: { cccdFront: true, cccdBack: false, verified: false },
-    status: { active: true, betLocked: false, withdrawLocked: false },
-    bank: { name: "VPBank", accountNumber: "5678901234", accountHolder: "Choi Cho Chan" },
-    phone: "0906789012",
     email: "choichochan@example.com",
+    phone: "0906789012",
+    balance: { available: 320000, frozen: 8000 },
+    status: { active: true, betLocked: false, withdrawLocked: false },
+    verification: { status: "pending" },
     createdAt: "2024-01-20T07:20:00Z",
     lastLogin: "2024-01-20T19:30:00Z",
   },
   {
-    _id: "7",
+    id: "7",
     username: "choichochan123",
     fullName: "Choi Cho Chan 123",
-    role: "user",
-    balance: { available: 1800000, frozen: 75000 },
-    loginInfo: "192.168.1.7",
-    verification: { cccdFront: true, cccdBack: true, verified: true },
-    status: { active: true, betLocked: false, withdrawLocked: false },
-    bank: { name: "MB Bank", accountNumber: "6789012345", accountHolder: "Choi Cho Chan 123" },
-    phone: "0907890123",
     email: "choichochan123@example.com",
+    phone: "0907890123",
+    balance: { available: 1800000, frozen: 75000 },
+    status: { active: true, betLocked: false, withdrawLocked: false },
+    verification: { status: "verified" },
     createdAt: "2024-01-21T08:00:00Z",
     lastLogin: "2024-01-20T21:45:00Z",
   },
   {
-    _id: "8",
+    id: "8",
     username: "admin",
     fullName: "Admin User",
-    role: "admin",
-    balance: { available: 10000000, frozen: 0 },
-    loginInfo: "192.168.1.8",
-    verification: { cccdFront: true, cccdBack: true, verified: true },
-    status: { active: true, betLocked: false, withdrawLocked: false },
-    bank: { name: "Vietcombank", accountNumber: "7890123456", accountHolder: "Admin User" },
-    phone: "0908901234",
     email: "admin@example.com",
+    phone: "0908901234",
+    balance: { available: 10000000, frozen: 0 },
+    status: { active: true, betLocked: false, withdrawLocked: false },
+    verification: { status: "verified" },
     createdAt: "2024-01-01T00:00:00Z",
     lastLogin: "2024-01-20T22:00:00Z",
   },
   {
-    _id: "9",
+    id: "9",
     username: "user1",
     fullName: "User One",
-    role: "user",
-    balance: { available: 650000, frozen: 20000 },
-    loginInfo: "192.168.1.9",
-    verification: { cccdFront: false, cccdBack: false, verified: false },
-    status: { active: true, betLocked: false, withdrawLocked: false },
-    bank: { name: "", accountNumber: "", accountHolder: "" },
-    phone: "0909012345",
     email: "user1@example.com",
+    phone: "0909012345",
+    balance: { available: 650000, frozen: 20000 },
+    status: { active: true, betLocked: false, withdrawLocked: false },
+    verification: { status: "pending" },
     createdAt: "2024-01-22T09:30:00Z",
     lastLogin: "2024-01-20T15:20:00Z",
   },
   {
-    _id: "10",
+    id: "10",
     username: "tdnm",
     fullName: "TDNM",
-    role: "user",
-    balance: { available: 1450000, frozen: 60000 },
-    loginInfo: "192.168.1.10",
-    verification: { cccdFront: true, cccdBack: true, verified: true },
-    status: { active: true, betLocked: false, withdrawLocked: false },
-    bank: { name: "Sacombank", accountNumber: "8901234567", accountHolder: "TDNM" },
-    phone: "0910123456",
     email: "tdnm@example.com",
+    phone: "0910123456",
+    balance: { available: 1450000, frozen: 60000 },
+    status: { active: true, betLocked: false, withdrawLocked: false },
+    verification: { status: "verified" },
     createdAt: "2024-01-23T10:15:00Z",
     lastLogin: "2024-01-20T17:10:00Z",
   },
   {
-    _id: "11",
+    id: "11",
     username: "abc1234",
     fullName: "ABC 1234",
-    role: "user",
-    balance: { available: 280000, frozen: 12000 },
-    loginInfo: "192.168.1.11",
-    verification: { cccdFront: true, cccdBack: false, verified: false },
-    status: { active: true, betLocked: false, withdrawLocked: false },
-    bank: { name: "Eximbank", accountNumber: "9012345678", accountHolder: "ABC 1234" },
-    phone: "0911234567",
     email: "abc1234@example.com",
+    phone: "0911234567",
+    balance: { available: 280000, frozen: 12000 },
+    status: { active: true, betLocked: false, withdrawLocked: false },
+    verification: { status: "pending" },
     createdAt: "2024-01-24T11:00:00Z",
     lastLogin: "2024-01-20T13:45:00Z",
   },
   {
-    _id: "12",
+    id: "12",
     username: "vancong1052002",
     fullName: "Van Cong 1052002",
-    role: "user",
-    balance: { available: 3200000, frozen: 150000 },
-    loginInfo: "192.168.1.12",
-    verification: { cccdFront: true, cccdBack: true, verified: true },
-    status: { active: true, betLocked: false, withdrawLocked: false },
-    bank: { name: "HDBank", accountNumber: "0123456789", accountHolder: "Van Cong 1052002" },
-    phone: "0912345678",
     email: "vancong1052002@example.com",
+    phone: "0912345678",
+    balance: { available: 3200000, frozen: 150000 },
+    status: { active: true, betLocked: false, withdrawLocked: false },
+    verification: { status: "verified" },
     createdAt: "2024-01-25T12:30:00Z",
     lastLogin: "2024-01-20T11:20:00Z",
   },
   {
-    _id: "13",
+    id: "13",
     username: "bolaoi23",
     fullName: "Bolao I23",
-    role: "user",
-    balance: { available: 920000, frozen: 40000 },
-    loginInfo: "192.168.1.13",
-    verification: { cccdFront: true, cccdBack: true, verified: true },
-    status: { active: true, betLocked: false, withdrawLocked: false },
-    bank: { name: "TPBank", accountNumber: "1234567890", accountHolder: "Bolao I23" },
-    phone: "0913456789",
     email: "bolaoi23@example.com",
+    phone: "0913456789",
+    balance: { available: 920000, frozen: 40000 },
+    status: { active: true, betLocked: false, withdrawLocked: false },
+    verification: { status: "verified" },
     createdAt: "2024-01-26T14:00:00Z",
     lastLogin: "2024-01-20T09:30:00Z",
   },
   {
-    _id: "14",
+    id: "14",
     username: "Nguyenvana",
     fullName: "Nguyen Van A",
-    role: "user",
-    balance: { available: 1650000, frozen: 80000 },
-    loginInfo: "192.168.1.14",
-    verification: { cccdFront: true, cccdBack: false, verified: false },
-    status: { active: true, betLocked: false, withdrawLocked: false },
-    bank: { name: "VIB", accountNumber: "2345678901", accountHolder: "Nguyen Van A" },
-    phone: "0914567890",
     email: "nguyenvana@example.com",
+    phone: "0914567890",
+    balance: { available: 1650000, frozen: 80000 },
+    status: { active: true, betLocked: false, withdrawLocked: false },
+    verification: { status: "pending" },
     createdAt: "2024-01-27T15:45:00Z",
     lastLogin: "2024-01-20T08:15:00Z",
   },
 ]
 
 const mockDeposits = [
-  { id: "1", userId: "amen123", amount: 500000, status: "completed", date: "2024-01-20", method: "Bank Transfer" },
-  { id: "2", userId: "tramanh2025", amount: 300000, status: "pending", date: "2024-01-20", method: "E-wallet" },
-  { id: "3", userId: "phattai68", amount: 1000000, status: "completed", date: "2024-01-19", method: "Bank Transfer" },
-  { id: "4", userId: "mami123", amount: 250000, status: "completed", date: "2024-01-19", method: "Bank Transfer" },
-  { id: "5", userId: "choichochan123", amount: 750000, status: "pending", date: "2024-01-18", method: "E-wallet" },
-]
-
-const mockWithdrawals = [
-  { id: "1", userId: "amen123", amount: 200000, status: "completed", date: "2024-01-20", method: "Bank Transfer" },
-  { id: "2", userId: "phattai68", amount: 500000, status: "pending", date: "2024-01-20", method: "Bank Transfer" },
-  {
-    id: "3",
-    userId: "vancong1052002",
-    amount: 800000,
-    status: "completed",
-    date: "2024-01-19",
-    method: "Bank Transfer",
-  },
-  { id: "4", userId: "tdnm", amount: 300000, status: "rejected", date: "2024-01-19", method: "Bank Transfer" },
-  { id: "5", userId: "bolaoi23", amount: 150000, status: "pending", date: "2024-01-18", method: "E-wallet" },
-]
-
-const mockOrders = [
   {
     id: "1",
-    userId: "amen123",
-    symbol: "EUR/USD",
-    type: "CALL",
-    amount: 100000,
-    result: "win",
-    profit: 85000,
-    date: "2024-01-20",
+    user: { fullName: "Amen 123", username: "amen123" },
+    amount: 500000,
+    bankInfo: { bankName: "Vietcombank", accountNumber: "1234567890", accountName: "Amen 123" },
+    status: "pending",
+    createdAt: "2024-01-20T10:30:00Z",
+    approvedAt: null,
   },
   {
     id: "2",
-    userId: "tramanh2025",
-    symbol: "GBP/USD",
-    type: "PUT",
-    amount: 50000,
-    result: "loss",
-    profit: -50000,
-    date: "2024-01-20",
+    user: { fullName: "Tra Manh 2025", username: "tramanh2025" },
+    amount: 300000,
+    bankInfo: { bankName: "Techcombank", accountNumber: "2345678901", accountName: "Tra Manh 2025" },
+    status: "approved",
+    createdAt: "2024-01-20T09:15:00Z",
+    approvedAt: "2024-01-20T10:00:00Z",
   },
   {
     id: "3",
-    userId: "phattai68",
-    symbol: "USD/JPY",
-    type: "CALL",
-    amount: 200000,
-    result: "win",
-    profit: 170000,
-    date: "2024-01-19",
+    user: { fullName: "Phat Tai 68", username: "phattai68" },
+    amount: 1000000,
+    bankInfo: { bankName: "BIDV", accountNumber: "3456789012", accountName: "Phat Tai 68" },
+    status: "pending",
+    createdAt: "2024-01-19T14:20:00Z",
+    approvedAt: null,
   },
   {
     id: "4",
-    userId: "mami123",
-    symbol: "AUD/USD",
-    type: "PUT",
-    amount: 75000,
-    result: "win",
-    profit: 63750,
-    date: "2024-01-19",
+    user: { fullName: "Mami 123", username: "mami123" },
+    amount: 250000,
+    bankInfo: { bankName: "ACB", accountNumber: "4567890123", accountName: "Mami 123" },
+    status: "approved",
+    createdAt: "2024-01-19T11:45:00Z",
+    approvedAt: "2024-01-19T12:30:00Z",
   },
   {
     id: "5",
-    userId: "choichochan123",
-    symbol: "EUR/GBP",
-    type: "CALL",
-    amount: 150000,
-    result: "loss",
-    profit: -150000,
-    date: "2024-01-18",
+    user: { fullName: "Choi Cho Chan 123", username: "choichochan123" },
+    amount: 750000,
+    bankInfo: { bankName: "MB Bank", accountNumber: "6789012345", accountName: "Choi Cho Chan 123" },
+    status: "rejected",
+    createdAt: "2024-01-18T16:00:00Z",
+    approvedAt: null,
   },
 ]
+
+const mockWithdrawals = [
+  {
+    id: "1",
+    user: { fullName: "Amen 123", username: "amen123" },
+    amount: 200000,
+    bank: { bankName: "Vietcombank", accountNumber: "1234567890", accountName: "Amen 123" },
+    status: "completed",
+    createdAt: "2024-01-20T08:30:00Z",
+  },
+  {
+    id: "2",
+    user: { fullName: "Phat Tai 68", username: "phattai68" },
+    amount: 500000,
+    bank: { bankName: "BIDV", accountNumber: "3456789012", accountName: "Phat Tai 68" },
+    status: "processing",
+    createdAt: "2024-01-20T07:15:00Z",
+  },
+  {
+    id: "3",
+    user: { fullName: "Van Cong 1052002", username: "vancong1052002" },
+    amount: 800000,
+    bank: { bankName: "HDBank", accountNumber: "0123456789", accountName: "Van Cong 1052002" },
+    status: "completed",
+    createdAt: "2024-01-19T13:20:00Z",
+  },
+  {
+    id: "4",
+    user: { fullName: "TDNM", username: "tdnm" },
+    amount: 300000,
+    bank: { bankName: "Sacombank", accountNumber: "8901234567", accountName: "TDNM" },
+    status: "rejected",
+    createdAt: "2024-01-19T10:45:00Z",
+  },
+  {
+    id: "5",
+    user: { fullName: "Bolao I23", username: "bolaoi23" },
+    amount: 150000,
+    bank: { bankName: "TPBank", accountNumber: "1234567890", accountName: "Bolao I23" },
+    status: "processing",
+    createdAt: "2024-01-18T15:30:00Z",
+  },
+]
+
+const mockStats = {
+  totalUsers: 14,
+  totalDeposits: 2800000,
+  totalWithdrawals: 1950000,
+  activeOrders: 45,
+}
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("vi-VN", {
@@ -339,572 +308,561 @@ function formatCurrency(amount: number) {
 }
 
 function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("vi-VN")
+  return new Date(dateString).toLocaleDateString("vi-VN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
 }
 
-function formatDateTime(dateString: string) {
-  return new Date(dateString).toLocaleString("vi-VN")
-}
+function getStatusBadge(status: string) {
+  const statusConfig = {
+    active: { variant: "default" as const, label: "Hoạt động" },
+    inactive: { variant: "secondary" as const, label: "Không hoạt động" },
+    verified: { variant: "default" as const, label: "Đã xác minh" },
+    pending: { variant: "outline" as const, label: "Chờ xác minh" },
+    approved: { variant: "default" as const, label: "Đã duyệt" },
+    rejected: { variant: "destructive" as const, label: "Từ chối" },
+    completed: { variant: "default" as const, label: "Hoàn thành" },
+    processing: { variant: "outline" as const, label: "Đang xử lý" },
+  }
 
-// Overview Page Component
-function OverviewPage() {
-  const totalUsers = mockUsers.length
-  const totalBalance = mockUsers.reduce((sum, user) => sum + user.balance.available + user.balance.frozen, 0)
-  const totalDeposits = mockDeposits.reduce((sum, deposit) => sum + deposit.amount, 0)
-  const totalWithdrawals = mockWithdrawals.reduce((sum, withdrawal) => sum + withdrawal.amount, 0)
+  const config = statusConfig[status as keyof typeof statusConfig] || {
+    variant: "secondary" as const,
+    label: status,
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng người dùng</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalUsers}</div>
-            <p className="text-xs text-muted-foreground">+2 từ tháng trước</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng số dư</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalBalance)}</div>
-            <p className="text-xs text-muted-foreground">+15% từ tháng trước</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng nạp tiền</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalDeposits)}</div>
-            <p className="text-xs text-muted-foreground">+8% từ tháng trước</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng rút tiền</CardTitle>
-            <TrendingDown className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalWithdrawals)}</div>
-            <p className="text-xs text-muted-foreground">+3% từ tháng trước</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>Hoạt động gần đây</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <div className="ml-4 space-y-1">
-                  <p className="text-sm font-medium leading-none">amen123 đã nạp 500,000 VND</p>
-                  <p className="text-sm text-muted-foreground">2 giờ trước</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <div className="ml-4 space-y-1">
-                  <p className="text-sm font-medium leading-none">phattai68 đã rút 500,000 VND</p>
-                  <p className="text-sm text-muted-foreground">4 giờ trước</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <div className="ml-4 space-y-1">
-                  <p className="text-sm font-medium leading-none">tramanh2025 đã đăng ký tài khoản</p>
-                  <p className="text-sm text-muted-foreground">6 giờ trước</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle>Thống kê nhanh</CardTitle>
-            <CardDescription>Tổng quan hệ thống</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Người dùng đã xác minh</span>
-                <span className="text-sm font-medium">{mockUsers.filter((u) => u.verification.verified).length}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Người dùng hoạt động</span>
-                <span className="text-sm font-medium">{mockUsers.filter((u) => u.status.active).length}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Giao dịch hôm nay</span>
-                <span className="text-sm font-medium">{mockOrders.length}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <Badge variant={config.variant} className="text-xs">
+      {config.label}
+    </Badge>
   )
 }
 
-// Customers Page Component
-function CustomersPage() {
-  const [customers, setCustomers] = useState(mockUsers)
+export function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState("overview")
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const filteredCustomers = customers.filter((customer) => {
-    const matchesSearch =
-      customer.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase())
+  // Mock user for header
+  const user = { username: "admin" }
 
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "active" && customer.status.active) ||
-      (statusFilter === "inactive" && !customer.status.active) ||
-      (statusFilter === "verified" && customer.verification.verified) ||
-      (statusFilter === "pending" && !customer.verification.verified)
-
-    return matchesSearch && matchesStatus
-  })
-
-  const handleEditCustomer = (customer: any) => {
-    setSelectedCustomer(customer)
-    setIsEditDialogOpen(true)
+  const logout = () => {
+    // Handle logout logic
+    console.log("Logging out...")
   }
 
-  const handleSaveCustomer = () => {
-    if (selectedCustomer) {
-      setCustomers(customers.map((c) => (c._id === selectedCustomer._id ? selectedCustomer : c)))
-      setIsEditDialogOpen(false)
-      setSelectedCustomer(null)
-    }
+  const handleUserAction = (action: string, userId: string) => {
+    console.log(`${action} for user ${userId}`)
+  }
+
+  const handleDepositAction = (action: string, depositId: string) => {
+    setIsLoading(true)
+    // Simulate API call
+    setTimeout(() => {
+      console.log(`${action} deposit ${depositId}`)
+      setIsLoading(false)
+    }, 1000)
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Khách hàng</h2>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Thêm khách hàng
-        </Button>
-      </div>
-
-      <div className="flex items-center space-x-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Tìm kiếm khách hàng..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8"
-          />
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-600">Xin chào, {user?.username}</span>
+              <Button variant="outline" onClick={logout}>
+                Đăng xuất
+              </Button>
+            </div>
+          </div>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Lọc theo trạng thái" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả</SelectItem>
-            <SelectItem value="active">Hoạt động</SelectItem>
-            <SelectItem value="inactive">Không hoạt động</SelectItem>
-            <SelectItem value="verified">Đã xác minh</SelectItem>
-            <SelectItem value="pending">Chờ xác minh</SelectItem>
-          </SelectContent>
-        </Select>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="overview">Tổng quan</TabsTrigger>
+            <TabsTrigger value="users">Khách hàng</TabsTrigger>
+            <TabsTrigger value="deposits">Nạp tiền</TabsTrigger>
+            <TabsTrigger value="withdrawals">Rút tiền</TabsTrigger>
+            <TabsTrigger value="orders">Lệnh giao dịch</TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Tổng người dùng</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{mockStats.totalUsers.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground">+12% so với tháng trước</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Tổng nạp tiền</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatCurrency(mockStats.totalDeposits)}</div>
+                  <p className="text-xs text-muted-foreground">+8% so với tháng trước</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Tổng rút tiền</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatCurrency(mockStats.totalWithdrawals)}</div>
+                  <p className="text-xs text-muted-foreground">+5% so với tháng trước</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Lệnh đang hoạt động</CardTitle>
+                  <Activity className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{mockStats.activeOrders}</div>
+                  <p className="text-xs text-muted-foreground">-3% so với hôm qua</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Hoạt động gần đây</CardTitle>
+                  <CardDescription>Các giao dịch và hoạt động mới nhất</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Nạp tiền thành công</p>
+                        <p className="text-xs text-muted-foreground">amen123 - 500,000 VND</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground">2 phút trước</span>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Đăng ký mới</p>
+                        <p className="text-xs text-muted-foreground">tramanh2025 đã tạo tài khoản</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground">5 phút trước</span>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Yêu cầu rút tiền</p>
+                        <p className="text-xs text-muted-foreground">phattai68 - 500,000 VND</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground">10 phút trước</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Thống kê hôm nay</CardTitle>
+                  <CardDescription>Dữ liệu trong ngày</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Đăng ký mới</span>
+                      <span className="font-medium">12</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Nạp tiền</span>
+                      <span className="font-medium">8</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Rút tiền</span>
+                      <span className="font-medium">5</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Lệnh giao dịch</span>
+                      <span className="font-medium">156</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Users Tab */}
+          <TabsContent value="users" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Quản lý khách hàng</CardTitle>
+                <CardDescription>Danh sách và quản lý tài khoản khách hàng</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Tìm kiếm theo tên, email, số điện thoại..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Lọc trạng thái" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả</SelectItem>
+                      <SelectItem value="active">Hoạt động</SelectItem>
+                      <SelectItem value="inactive">Không hoạt động</SelectItem>
+                      <SelectItem value="verified">Đã xác minh</SelectItem>
+                      <SelectItem value="pending">Chờ xác minh</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Xuất Excel
+                  </Button>
+                </div>
+
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Người dùng</TableHead>
+                        <TableHead>Liên hệ</TableHead>
+                        <TableHead>Số dư</TableHead>
+                        <TableHead>Trạng thái</TableHead>
+                        <TableHead>Xác minh</TableHead>
+                        <TableHead>Đăng ký</TableHead>
+                        <TableHead>Hoạt động cuối</TableHead>
+                        <TableHead className="text-right">Thao tác</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {mockUsers.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{user.fullName}</div>
+                              <div className="text-sm text-muted-foreground">@{user.username}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="text-sm">{user.email}</div>
+                              <div className="text-sm text-muted-foreground">{user.phone}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{formatCurrency(user.balance.available)}</div>
+                              {user.balance.frozen > 0 && (
+                                <div className="text-sm text-orange-600">
+                                  Đóng băng: {formatCurrency(user.balance.frozen)}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {getStatusBadge(user.status.active ? "active" : "inactive")}
+                              {user.status.betLocked && (
+                                <Badge variant="destructive" className="text-xs">
+                                  Khóa cược
+                                </Badge>
+                              )}
+                              {user.status.withdrawLocked && (
+                                <Badge variant="destructive" className="text-xs">
+                                  Khóa rút
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>{getStatusBadge(user.verification.status)}</TableCell>
+                          <TableCell>
+                            <span className="text-sm">{formatDate(user.createdAt)}</span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm">{formatDate(user.lastLogin)}</span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedUser(user)
+                                  setIsEditModalOpen(true)
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleUserAction("xem chi tiết", user.id)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Deposits Tab */}
+          <TabsContent value="deposits" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Yêu cầu nạp tiền</CardTitle>
+                <CardDescription>Quản lý các yêu cầu nạp tiền từ khách hàng</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Khách hàng</TableHead>
+                        <TableHead>Số tiền</TableHead>
+                        <TableHead>Ngân hàng</TableHead>
+                        <TableHead>Trạng thái</TableHead>
+                        <TableHead>Thời gian</TableHead>
+                        <TableHead className="text-right">Thao tác</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {mockDeposits.map((deposit) => (
+                        <TableRow key={deposit.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{deposit.user.fullName}</div>
+                              <div className="text-sm text-muted-foreground">@{deposit.user.username}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-medium text-green-600">{formatCurrency(deposit.amount)}</span>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="text-sm font-medium">{deposit.bankInfo.bankName}</div>
+                              <div className="text-sm text-muted-foreground">{deposit.bankInfo.accountNumber}</div>
+                              <div className="text-sm text-muted-foreground">{deposit.bankInfo.accountName}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{getStatusBadge(deposit.status)}</TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="text-sm">{formatDate(deposit.createdAt)}</div>
+                              {deposit.approvedAt && (
+                                <div className="text-xs text-muted-foreground">
+                                  Duyệt: {formatDate(deposit.approvedAt)}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {deposit.status === "pending" && (
+                              <div className="flex justify-end space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDepositAction("duyệt", deposit.id)}
+                                  disabled={isLoading}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Duyệt
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDepositAction("từ chối", deposit.id)}
+                                  disabled={isLoading}
+                                >
+                                  <XCircle className="h-4 w-4 mr-1" />
+                                  Từ chối
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Withdrawals Tab */}
+          <TabsContent value="withdrawals" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Yêu cầu rút tiền</CardTitle>
+                <CardDescription>Quản lý các yêu cầu rút tiền từ khách hàng</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Khách hàng</TableHead>
+                        <TableHead>Số tiền</TableHead>
+                        <TableHead>Ngân hàng</TableHead>
+                        <TableHead>Trạng thái</TableHead>
+                        <TableHead>Thời gian</TableHead>
+                        <TableHead className="text-right">Thao tác</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {mockWithdrawals.map((withdrawal) => (
+                        <TableRow key={withdrawal.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{withdrawal.user.fullName}</div>
+                              <div className="text-sm text-muted-foreground">@{withdrawal.user.username}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-medium text-red-600">-{formatCurrency(withdrawal.amount)}</span>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="text-sm font-medium">{withdrawal.bank.bankName}</div>
+                              <div className="text-sm text-muted-foreground">{withdrawal.bank.accountNumber}</div>
+                              <div className="text-sm text-muted-foreground">{withdrawal.bank.accountName}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{getStatusBadge(withdrawal.status)}</TableCell>
+                          <TableCell>
+                            <span className="text-sm">{formatDate(withdrawal.createdAt)}</span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {withdrawal.status === "processing" && (
+                              <div className="flex justify-end space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDepositAction("hoàn thành", withdrawal.id)}
+                                  disabled={isLoading}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Hoàn thành
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDepositAction("từ chối", withdrawal.id)}
+                                  disabled={isLoading}
+                                >
+                                  <XCircle className="h-4 w-4 mr-1" />
+                                  Từ chối
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Orders Tab */}
+          <TabsContent value="orders" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Lệnh giao dịch</CardTitle>
+                <CardDescription>Theo dõi các lệnh giao dịch của khách hàng</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">Chức năng đang được phát triển</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Tên đăng nhập</TableHead>
-              <TableHead>Họ tên</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Số dư</TableHead>
-              <TableHead>Trạng thái</TableHead>
-              <TableHead>Xác minh</TableHead>
-              <TableHead>Đăng nhập cuối</TableHead>
-              <TableHead className="text-right">Thao tác</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredCustomers.map((customer) => (
-              <TableRow key={customer._id}>
-                <TableCell className="font-medium">{customer.username}</TableCell>
-                <TableCell>{customer.fullName}</TableCell>
-                <TableCell>{customer.email}</TableCell>
-                <TableCell>{formatCurrency(customer.balance.available)}</TableCell>
-                <TableCell>
-                  <Badge variant={customer.status.active ? "default" : "secondary"}>
-                    {customer.status.active ? "Hoạt động" : "Không hoạt động"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={customer.verification.verified ? "default" : "outline"}>
-                    {customer.verification.verified ? "Đã xác minh" : "Chờ xác minh"}
-                  </Badge>
-                </TableCell>
-                <TableCell>{formatDateTime(customer.lastLogin)}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => handleEditCustomer(customer)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Chỉnh sửa
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Eye className="mr-2 h-4 w-4" />
-                        Xem chi tiết
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>
-                        {customer.status.active ? (
-                          <>
-                            <UserX className="mr-2 h-4 w-4" />
-                            Vô hiệu hóa
-                          </>
-                        ) : (
-                          <>
-                            <UserCheck className="mr-2 h-4 w-4" />
-                            Kích hoạt
-                          </>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        {customer.status.betLocked ? (
-                          <>
-                            <Unlock className="mr-2 h-4 w-4" />
-                            Mở khóa giao dịch
-                          </>
-                        ) : (
-                          <>
-                            <Lock className="mr-2 h-4 w-4" />
-                            Khóa giao dịch
-                          </>
-                        )}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
-
-      {/* Edit Customer Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      {/* Edit User Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa khách hàng</DialogTitle>
-            <DialogDescription>Thay đổi thông tin khách hàng. Nhấn lưu khi hoàn tất.</DialogDescription>
+            <DialogTitle>Chỉnh sửa thông tin khách hàng</DialogTitle>
+            <DialogDescription>Cập nhật thông tin và trạng thái của khách hàng</DialogDescription>
           </DialogHeader>
-          {selectedCustomer && (
+          {selectedUser && (
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="fullName" className="text-right">
                   Họ tên
                 </Label>
-                <Input
-                  id="fullName"
-                  value={selectedCustomer.fullName}
-                  onChange={(e) => setSelectedCustomer({ ...selectedCustomer, fullName: e.target.value })}
-                  className="col-span-3"
-                />
+                <Input id="fullName" defaultValue={selectedUser.fullName} className="col-span-3" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="email" className="text-right">
                   Email
                 </Label>
-                <Input
-                  id="email"
-                  value={selectedCustomer.email}
-                  onChange={(e) => setSelectedCustomer({ ...selectedCustomer, email: e.target.value })}
-                  className="col-span-3"
-                />
+                <Input id="email" defaultValue={selectedUser.email} className="col-span-3" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="phone" className="text-right">
                   Số điện thoại
                 </Label>
-                <Input
-                  id="phone"
-                  value={selectedCustomer.phone}
-                  onChange={(e) => setSelectedCustomer({ ...selectedCustomer, phone: e.target.value })}
-                  className="col-span-3"
-                />
+                <Input id="phone" defaultValue={selectedUser.phone} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="status" className="text-right">
+                  Trạng thái
+                </Label>
+                <Select defaultValue={selectedUser.status.active ? "active" : "inactive"}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Hoạt động</SelectItem>
+                    <SelectItem value="inactive">Không hoạt động</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button type="submit" onClick={handleSaveCustomer}>
+            <Button type="submit" onClick={() => setIsEditModalOpen(false)}>
               Lưu thay đổi
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  )
-}
-
-// Deposits Page Component
-function DepositsPage() {
-  const [deposits, setDeposits] = useState(mockDeposits)
-
-  const handleStatusChange = (id: string, newStatus: string) => {
-    setDeposits(deposits.map((deposit) => (deposit.id === id ? { ...deposit, status: newStatus } : deposit)))
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Nạp tiền</h2>
-      </div>
-
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Người dùng</TableHead>
-              <TableHead>Số tiền</TableHead>
-              <TableHead>Phương thức</TableHead>
-              <TableHead>Trạng thái</TableHead>
-              <TableHead>Ngày</TableHead>
-              <TableHead className="text-right">Thao tác</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {deposits.map((deposit) => (
-              <TableRow key={deposit.id}>
-                <TableCell className="font-medium">{deposit.id}</TableCell>
-                <TableCell>{deposit.userId}</TableCell>
-                <TableCell>{formatCurrency(deposit.amount)}</TableCell>
-                <TableCell>{deposit.method}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      deposit.status === "completed"
-                        ? "default"
-                        : deposit.status === "pending"
-                          ? "outline"
-                          : "destructive"
-                    }
-                  >
-                    {deposit.status === "completed"
-                      ? "Hoàn thành"
-                      : deposit.status === "pending"
-                        ? "Chờ xử lý"
-                        : "Từ chối"}
-                  </Badge>
-                </TableCell>
-                <TableCell>{formatDate(deposit.date)}</TableCell>
-                <TableCell className="text-right">
-                  {deposit.status === "pending" && (
-                    <div className="space-x-2">
-                      <Button size="sm" onClick={() => handleStatusChange(deposit.id, "completed")}>
-                        Duyệt
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleStatusChange(deposit.id, "rejected")}
-                      >
-                        Từ chối
-                      </Button>
-                    </div>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
-    </div>
-  )
-}
-
-// Withdrawals Page Component
-function WithdrawalsPage() {
-  const [withdrawals, setWithdrawals] = useState(mockWithdrawals)
-
-  const handleStatusChange = (id: string, newStatus: string) => {
-    setWithdrawals(
-      withdrawals.map((withdrawal) => (withdrawal.id === id ? { ...withdrawal, status: newStatus } : withdrawal)),
-    )
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Rút tiền</h2>
-      </div>
-
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Người dùng</TableHead>
-              <TableHead>Số tiền</TableHead>
-              <TableHead>Phương thức</TableHead>
-              <TableHead>Trạng thái</TableHead>
-              <TableHead>Ngày</TableHead>
-              <TableHead className="text-right">Thao tác</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {withdrawals.map((withdrawal) => (
-              <TableRow key={withdrawal.id}>
-                <TableCell className="font-medium">{withdrawal.id}</TableCell>
-                <TableCell>{withdrawal.userId}</TableCell>
-                <TableCell>{formatCurrency(withdrawal.amount)}</TableCell>
-                <TableCell>{withdrawal.method}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      withdrawal.status === "completed"
-                        ? "default"
-                        : withdrawal.status === "pending"
-                          ? "outline"
-                          : "destructive"
-                    }
-                  >
-                    {withdrawal.status === "completed"
-                      ? "Hoàn thành"
-                      : withdrawal.status === "pending"
-                        ? "Chờ xử lý"
-                        : "Từ chối"}
-                  </Badge>
-                </TableCell>
-                <TableCell>{formatDate(withdrawal.date)}</TableCell>
-                <TableCell className="text-right">
-                  {withdrawal.status === "pending" && (
-                    <div className="space-x-2">
-                      <Button size="sm" onClick={() => handleStatusChange(withdrawal.id, "completed")}>
-                        Duyệt
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleStatusChange(withdrawal.id, "rejected")}
-                      >
-                        Từ chối
-                      </Button>
-                    </div>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
-    </div>
-  )
-}
-
-// Orders Page Component
-function OrdersPage() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Lệnh giao dịch</h2>
-      </div>
-
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Người dùng</TableHead>
-              <TableHead>Cặp tiền</TableHead>
-              <TableHead>Loại</TableHead>
-              <TableHead>Số tiền</TableHead>
-              <TableHead>Kết quả</TableHead>
-              <TableHead>Lãi/Lỗ</TableHead>
-              <TableHead>Ngày</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mockOrders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell className="font-medium">{order.id}</TableCell>
-                <TableCell>{order.userId}</TableCell>
-                <TableCell>{order.symbol}</TableCell>
-                <TableCell>
-                  <Badge variant={order.type === "CALL" ? "default" : "secondary"}>{order.type}</Badge>
-                </TableCell>
-                <TableCell>{formatCurrency(order.amount)}</TableCell>
-                <TableCell>
-                  <Badge variant={order.result === "win" ? "default" : "destructive"}>
-                    {order.result === "win" ? "Thắng" : "Thua"}
-                  </Badge>
-                </TableCell>
-                <TableCell className={order.profit > 0 ? "text-green-600" : "text-red-600"}>
-                  {formatCurrency(order.profit)}
-                </TableCell>
-                <TableCell>{formatDate(order.date)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
-    </div>
-  )
-}
-
-// Main Admin Dashboard Component
-export function AdminDashboard() {
-  return (
-    <div className="flex-col md:flex">
-      <div className="border-b">
-        <div className="flex h-16 items-center px-4">
-          <h1 className="text-xl font-semibold">Bảng điều khiển quản trị</h1>
-        </div>
-      </div>
-      <div className="flex-1 space-y-4 p-8 pt-6">
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-            <TabsTrigger value="customers">Khách hàng</TabsTrigger>
-            <TabsTrigger value="deposits">Nạp tiền</TabsTrigger>
-            <TabsTrigger value="withdrawals">Rút tiền</TabsTrigger>
-            <TabsTrigger value="orders">Lệnh giao dịch</TabsTrigger>
-          </TabsList>
-          <TabsContent value="overview" className="space-y-4">
-            <OverviewPage />
-          </TabsContent>
-          <TabsContent value="customers" className="space-y-4">
-            <CustomersPage />
-          </TabsContent>
-          <TabsContent value="deposits" className="space-y-4">
-            <DepositsPage />
-          </TabsContent>
-          <TabsContent value="withdrawals" className="space-y-4">
-            <WithdrawalsPage />
-          </TabsContent>
-          <TabsContent value="orders" className="space-y-4">
-            <OrdersPage />
-          </TabsContent>
-        </Tabs>
-      </div>
     </div>
   )
 }
