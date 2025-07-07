@@ -30,7 +30,6 @@ export const useTradingSession = () => {
       if (data.currentSession) {
         setCurrentSession(data.currentSession)
 
-        // Tính thời gian còn lại
         const now = new Date()
         const endTime = new Date(data.currentSession.endTime)
         const timeDiff = Math.max(0, Math.floor((endTime.getTime() - now.getTime()) / 1000))
@@ -51,15 +50,13 @@ export const useTradingSession = () => {
     }
   }
 
-  // Lấy thông tin phiên ban đầu
   useEffect(() => {
     fetchSession()
 
-    // Cập nhật thông tin mỗi giây
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          fetchSession() // Làm mới thông tin khi hết giờ
+          fetchSession()
           return 0
         }
         return prev - 1
