@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect, createContext, useContext } from "react"
 
 type User = {
@@ -41,7 +40,15 @@ type AuthContextType = {
   refreshUser: () => Promise<void>
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined)
+export const AuthContext = createContext<AuthContextType>({
+  user: null,
+  isLoading: true,
+  login: async () => ({ success: false, message: "Not implemented" }),
+  logout: async () => {},
+  isAuthenticated: () => false,
+  isAdmin: () => false,
+  refreshUser: async () => {},
+})
 
 export function useAuth() {
   const context = useContext(AuthContext)
@@ -51,7 +58,7 @@ export function useAuth() {
   return context
 }
 
-function useAuthStandalone() {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -117,11 +124,13 @@ function useAuthStandalone() {
         method: "POST",
         credentials: "include",
       })
-
       setUser(null)
+      // Redirect to login after logout
+      window.location.href = "/login"
     } catch (error) {
       console.error("Logout error:", error)
       setUser(null)
+      window.location.href = "/login"
     }
   }
 
@@ -141,23 +150,19 @@ function useAuthStandalone() {
     checkAuth()
   }, [])
 
-  return {
-    user,
-    isLoading,
-    login,
-    logout,
-    isAuthenticated,
-    isAdmin,
-    refreshUser,
-  }
-}
-
-// AuthProvider component to wrap the application
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const auth = useAuthStandalone();
   return (
-    <AuthContext.Provider value={auth}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        login,
+        logout,
+        isAuthenticated,
+        isAdmin,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
-  );
+  )
 }

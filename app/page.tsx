@@ -2,6 +2,6 @@
 
 import { ThemeProvider } from "../components/theme-provider"
 
-export default function SyntheticV0PageForDeployment() {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return <ThemeProvider />
 }

@@ -2,42 +2,36 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get("token")?.value
   const { pathname } = request.nextUrl
+  const token = request.cookies.get("auth-token")?.value
 
-  // Public routes that don't require authentication
-  const publicRoutes = ["/", "/login", "/register"]
+  // Public paths that don't require authentication
+  const publicPaths = ["/login", "/register"]
+  const isPublicPath = publicPaths.includes(pathname)
 
-  // API routes that should be handled separately
-  if (pathname.startsWith("/api/")) {
-    return NextResponse.next()
-  }
+  // Admin paths that require admin role
+  const adminPaths = ["/admin"]
+  const isAdminPath = adminPaths.some((path) => pathname.startsWith(path))
 
-  // Static files and Next.js internals
-  if (
-    pathname.startsWith("/_next/") ||
-    pathname.startsWith("/favicon.ico") ||
-    pathname.startsWith("/images/") ||
-    pathname.startsWith("/icons/")
-  ) {
-    return NextResponse.next()
-  }
-
-  // Check if current path is public
-  const isPublicRoute = publicRoutes.includes(pathname)
+  // User paths that require user authentication
+  const userPaths = ["/trade", "/deposit", "/withdraw", "/orders", "/account"]
+  const isUserPath = userPaths.some((path) => pathname.startsWith(path))
 
   // If no token and trying to access protected route
-  if (!token && !isPublicRoute) {
-    const loginUrl = new URL("/login", request.url)
-    loginUrl.searchParams.set("callbackUrl", pathname)
-    return NextResponse.redirect(loginUrl)
+  if (!token && !isPublicPath) {
+    return NextResponse.redirect(new URL("/login", request.url))
   }
 
-  // If has token but trying to access auth pages, redirect based on role
-  if (token && (pathname === "/login" || pathname === "/register")) {
+  // If has token and trying to access auth pages, redirect based on role
+  if (token && isPublicPath) {
     // We can't easily decode the token here, so redirect to home
-    // The client-side auth will handle proper redirection
+    // The home page will handle the proper redirect based on role
     return NextResponse.redirect(new URL("/", request.url))
+  }
+
+  // For root path, redirect to login if no token
+  if (pathname === "/" && !token) {
+    return NextResponse.redirect(new URL("/login", request.url))
   }
 
   return NextResponse.next()
