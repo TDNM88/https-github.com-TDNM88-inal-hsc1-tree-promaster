@@ -1,16 +1,15 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { getUserFromRequest } from "@/lib/auth"
+import { NextResponse } from "next/server"
 
 export const runtime = "nodejs"
 
-// Mock data
-const deposits = [
+// Mock data for deposits
+const mockDeposits = [
   {
     id: "1",
     userId: "1",
-    userName: "Nguyễn Văn A",
+    userName: "Nguyễn Văn An",
     amount: 1000000,
-    method: "bank_transfer",
+    method: "Bank Transfer",
     status: "pending",
     createdAt: "2024-01-20T10:30:00Z",
     bankInfo: "Vietcombank - 1234567890",
@@ -18,56 +17,42 @@ const deposits = [
   {
     id: "2",
     userId: "2",
-    userName: "Trần Thị B",
-    amount: 2000000,
-    method: "momo",
+    userName: "Trần Thị Bình",
+    amount: 500000,
+    method: "E-wallet",
     status: "approved",
-    createdAt: "2024-01-19T14:15:00Z",
-    approvedAt: "2024-01-19T15:00:00Z",
+    createdAt: "2024-01-19T15:45:00Z",
+    bankInfo: "MoMo - 0912345678",
+    approvedAt: "2024-01-19T16:00:00Z",
   },
   {
     id: "3",
-    userId: "3",
-    userName: "Lê Văn C",
-    amount: 500000,
-    method: "bank_transfer",
+    userId: "1",
+    userName: "Nguyễn Văn An",
+    amount: 2000000,
+    method: "Bank Transfer",
     status: "rejected",
-    createdAt: "2024-01-18T09:45:00Z",
-    rejectedAt: "2024-01-18T16:30:00Z",
-    rejectionReason: "Thông tin không chính xác",
+    createdAt: "2024-01-18T11:20:00Z",
+    bankInfo: "BIDV - 9876543210",
+    rejectedAt: "2024-01-18T12:00:00Z",
+    rejectionReason: "Thông tin không khớp",
   },
 ]
 
-export async function GET(request: NextRequest) {
-  const user = getUserFromRequest(request)
-
-  if (!user || user.role !== "admin") {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+export async function GET() {
+  try {
+    return NextResponse.json({ deposits: mockDeposits })
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to fetch deposits" }, { status: 500 })
   }
-
-  return NextResponse.json({ deposits })
 }
 
-export async function PUT(request: NextRequest) {
-  const user = getUserFromRequest(request)
-
-  if (!user || user.role !== "admin") {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+export async function PUT(request: Request) {
+  try {
+    const { id, status, rejectionReason } = await request.json()
+    // In real app, update database
+    return NextResponse.json({ message: "Deposit status updated" })
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to update deposit" }, { status: 500 })
   }
-
-  const { id, status, rejectionReason } = await request.json()
-
-  const depositIndex = deposits.findIndex((d) => d.id === id)
-  if (depositIndex !== -1) {
-    deposits[depositIndex].status = status
-    if (status === "approved") {
-      deposits[depositIndex].approvedAt = new Date().toISOString()
-    } else if (status === "rejected") {
-      deposits[depositIndex].rejectedAt = new Date().toISOString()
-      deposits[depositIndex].rejectionReason = rejectionReason
-    }
-    return NextResponse.json({ message: "Cập nhật thành công", deposit: deposits[depositIndex] })
-  }
-
-  return NextResponse.json({ message: "Không tìm thấy yêu cầu nạp tiền" }, { status: 404 })
 }

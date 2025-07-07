@@ -11,8 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { User, LogOut, Settings } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { User, LogOut } from "lucide-react"
 
 interface UserMenuProps {
   user: {
@@ -62,16 +62,9 @@ export function UserMenu({ user }: UserMenuProps) {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{user.username}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {user.role === "admin" ? "Quản trị viên" : "Người dùng"}
-            </p>
+            <p className="text-xs leading-none text-muted-foreground">{user.role}</p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <Settings className="mr-2 h-4 w-4" />
-          <span>Cài đặt</span>
-        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} disabled={isLoading}>
           <LogOut className="mr-2 h-4 w-4" />

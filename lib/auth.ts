@@ -9,13 +9,34 @@ export interface User {
   role: "admin" | "user"
 }
 
+// Mock users database
+const users: User[] = [
+  { id: "1", username: "admin", role: "admin" },
+  { id: "2", username: "user", role: "user" },
+]
+
+export async function authenticate(username: string, password: string): Promise<User | null> {
+  // Simple authentication - in production, hash passwords
+  const validCredentials = [
+    { username: "admin", password: "admin123" },
+    { username: "user", password: "user123" },
+  ]
+
+  const credential = validCredentials.find((c) => c.username === username && c.password === password)
+  if (!credential) return null
+
+  const user = users.find((u) => u.username === username)
+  return user || null
+}
+
 export function generateToken(user: User): string {
-  return jwt.sign(user, JWT_SECRET, { expiresIn: "24h" })
+  return jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: "24h" })
 }
 
 export function verifyToken(token: string): User | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as User
+    const decoded = jwt.verify(token, JWT_SECRET) as User
+    return decoded
   } catch {
     return null
   }
@@ -27,19 +48,7 @@ export function getUserFromRequest(request: NextRequest): User | null {
   return verifyToken(token)
 }
 
-export async function authenticate(username: string, password: string): Promise<User | null> {
-  // Mock authentication - replace with real database lookup
-  const users = [
-    { id: "1", username: "admin", password: "admin123", role: "admin" as const },
-    { id: "2", username: "user", password: "user123", role: "user" as const },
-  ]
-
-  const user = users.find((u) => u.username === username && u.password === password)
-  if (!user) return null
-
-  return {
-    id: user.id,
-    username: user.username,
-    role: user.role,
-  }
+export async function getUser(): Promise<User | null> {
+  // This would typically check server-side session/cookie
+  return null
 }

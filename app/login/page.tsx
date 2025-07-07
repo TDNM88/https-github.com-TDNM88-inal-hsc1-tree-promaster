@@ -36,7 +36,7 @@ export default function LoginPage() {
           description: "Chào mừng bạn quay trở lại!",
         })
 
-        // Tự động chuyển hướng dựa trên vai trò
+        // Automatic redirect based on role
         if (data.user.role === "admin") {
           router.push("/admin")
         } else {

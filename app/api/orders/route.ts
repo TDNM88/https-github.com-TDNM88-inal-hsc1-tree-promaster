@@ -1,14 +1,13 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { getUserFromRequest } from "@/lib/auth"
+import { NextResponse } from "next/server"
 
 export const runtime = "nodejs"
 
-// Mock data
-const orders = [
+// Mock data for trading orders
+const mockOrders = [
   {
     id: "1",
     userId: "1",
-    userName: "Nguyễn Văn A",
+    userName: "Nguyễn Văn An",
     asset: "EUR/USD",
     type: "call",
     amount: 100000,
@@ -16,48 +15,61 @@ const orders = [
     closePrice: 1.0875,
     result: "win",
     profit: 85000,
-    openTime: "2024-01-21T10:00:00Z",
-    closeTime: "2024-01-21T10:05:00Z",
+    openTime: "2024-01-21T10:30:00Z",
+    closeTime: "2024-01-21T10:35:00Z",
     duration: "5m",
   },
   {
     id: "2",
     userId: "2",
-    userName: "Trần Thị B",
+    userName: "Trần Thị Bình",
     asset: "GBP/USD",
     type: "put",
-    amount: 200000,
+    amount: 50000,
     openPrice: 1.265,
     closePrice: 1.263,
     result: "win",
-    profit: 170000,
-    openTime: "2024-01-21T11:15:00Z",
-    closeTime: "2024-01-21T11:30:00Z",
-    duration: "15m",
+    profit: 42500,
+    openTime: "2024-01-21T11:00:00Z",
+    closeTime: "2024-01-21T11:05:00Z",
+    duration: "5m",
   },
   {
     id: "3",
     userId: "1",
-    userName: "Nguyễn Văn A",
+    userName: "Nguyễn Văn An",
     asset: "USD/JPY",
     type: "call",
-    amount: 150000,
-    openPrice: 148.5,
-    closePrice: 148.2,
+    amount: 200000,
+    openPrice: 149.5,
+    closePrice: 149.3,
     result: "loss",
-    profit: -150000,
-    openTime: "2024-01-21T14:30:00Z",
-    closeTime: "2024-01-21T14:35:00Z",
+    profit: -200000,
+    openTime: "2024-01-21T12:15:00Z",
+    closeTime: "2024-01-21T12:20:00Z",
+    duration: "5m",
+  },
+  {
+    id: "4",
+    userId: "3",
+    userName: "Lê Văn Cường",
+    asset: "AUD/USD",
+    type: "put",
+    amount: 75000,
+    openPrice: 0.658,
+    closePrice: 0.656,
+    result: "win",
+    profit: 63750,
+    openTime: "2024-01-21T13:45:00Z",
+    closeTime: "2024-01-21T13:50:00Z",
     duration: "5m",
   },
 ]
 
-export async function GET(request: NextRequest) {
-  const user = getUserFromRequest(request)
-
-  if (!user || user.role !== "admin") {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+export async function GET() {
+  try {
+    return NextResponse.json({ orders: mockOrders })
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to fetch orders" }, { status: 500 })
   }
-
-  return NextResponse.json({ orders })
 }

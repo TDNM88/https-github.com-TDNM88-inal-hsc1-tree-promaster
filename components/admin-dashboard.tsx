@@ -203,7 +203,18 @@ export function AdminDashboard() {
       win: "default",
       loss: "destructive",
     }
-    return <Badge variant={variants[status] || "outline"}>{status}</Badge>
+
+    const labels: Record<string, string> = {
+      active: "Hoạt động",
+      suspended: "Tạm khóa",
+      pending: "Chờ duyệt",
+      approved: "Đã duyệt",
+      rejected: "Từ chối",
+      win: "Thắng",
+      loss: "Thua",
+    }
+
+    return <Badge variant={variants[status] || "outline"}>{labels[status] || status}</Badge>
   }
 
   if (loading) {

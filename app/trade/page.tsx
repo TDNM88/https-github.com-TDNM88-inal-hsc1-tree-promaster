@@ -4,15 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { UserMenu } from "@/components/user-menu"
 
 export default function TradePage() {
-  const user = { username: "user", role: "user" }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <h1 className="text-2xl font-bold text-gray-900">Trading Platform</h1>
-            <UserMenu user={user} />
+            <h1 className="text-2xl font-bold text-gray-900">Trading Dashboard</h1>
+            <UserMenu user={{ username: "user", role: "user" }} />
           </div>
         </div>
       </header>
@@ -21,13 +19,11 @@ export default function TradePage() {
         <div className="px-4 py-6 sm:px-0">
           <Card>
             <CardHeader>
-              <CardTitle>Chào mừng đến với nền tảng giao dịch</CardTitle>
-              <CardDescription>Bắt đầu giao dịch binary options với nền tảng tiên tiến của chúng tôi</CardDescription>
+              <CardTitle>Binary Options Trading</CardTitle>
+              <CardDescription>Welcome to your trading dashboard</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600">
-                Giao diện giao dịch sẽ được triển khai tại đây. Đây là trang dành cho người dùng thường.
-              </p>
+              <p>Trading interface will be implemented here.</p>
             </CardContent>
           </Card>
         </div>
