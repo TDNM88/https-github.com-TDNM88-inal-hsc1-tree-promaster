@@ -23,7 +23,7 @@
     "@radix-ui/react-tooltip": "^1.0.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "date-fns": "latest",
+    "date-fns": "^3.0.0",
     "gcp-metadata": "latest",
     "jsonwebtoken": "latest",
     "kerberos": "latest",
@@ -35,6 +35,7 @@
     "react-dom": "^18",
     "snappy": "latest",
     "socks": "latest",
+    "swr": "latest",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7"
   },
