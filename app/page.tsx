@@ -1,7 +1,13 @@
-"use client"
+import { AdminDashboard } from "@/components/admin-dashboard"
+import { isAuthenticated } from "@/lib/auth"
+import { redirect } from "next/navigation"
 
-import { ThemeProvider } from "../components/theme-provider"
+export default async function Page() {
+  const authenticated = await isAuthenticated()
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <ThemeProvider />
+  if (!authenticated) {
+    redirect("/login")
+  }
+
+  return <AdminDashboard />
 }
